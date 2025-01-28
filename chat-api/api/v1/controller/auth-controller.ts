@@ -1,8 +1,8 @@
 import errorCodes from "../common/error-codes";
 import { genericFunc } from "../common/generic-func";
 import ResponseModel from "../model/error-model";
-import IUser from "../model/iuser";
-import databasePool from "../service/database";
+import IUser from "../model/interface/iuser";
+import databasePool from "../../../database";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import DeviceTypes from "../model/types/device-types";
@@ -30,6 +30,8 @@ export const signUp = genericFunc(async(req,res,next) => {
     res.json(new ResponseModel(errorCodes.ACCOUNT_SUCCESSFULLY_CREATED, 200))
 })
 
+
+
 export const signIn = genericFunc(async (req,res,next) => {
     const {email,password} = req.body
     const { device,browser,audience } = res.locals
@@ -38,12 +40,11 @@ export const signIn = genericFunc(async (req,res,next) => {
         throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500);
     }
 
-    const findUser = await databasePool.query("SELECT `email`, `password` from `users` WHERE email = ?",[email])
+    const findUser = await databasePool.query("SELECT `email`,`password` from `users` WHERE email = ?",[email])
     const user = findUser[0] as IUser[]
 
     if(user.length < 0)
         throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
-
 
     const checkPassword = await bcrypt.compare(password, user[0].password)
 
@@ -77,9 +78,9 @@ export const signIn = genericFunc(async (req,res,next) => {
         res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGNED_IN, 200, [{ access_token, refresh_token }]));
         return
     } else if(browser){
-        res.cookie("device", device, { maxAge: 3600 * 1000, httpOnly: true });
+        res.cookie("device", audience, { maxAge: 3600 * 1000, httpOnly: true });
         res.cookie("access_token", access_token, { maxAge: 3600 * 1000, httpOnly: true });
-        res.cookie("refresh_token", refresh_token, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
+        res.cookie("refresh_token", refresh_token, { maxAge: (30 * 24 * 60 * 60 * 1000), httpOnly: true });
         res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGNED_IN, 200));
     }else {
         throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500)

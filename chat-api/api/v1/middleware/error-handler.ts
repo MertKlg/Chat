@@ -4,6 +4,7 @@ import ResponseModel from "../model/error-model";
 
 
 const errorHandler = genericErrorHandler((err,req, res, next) => {
+
     if(err instanceof ResponseModel){
         return res.status(err.status).json(err)
     }

@@ -29,9 +29,10 @@ const errorCodes = {
     TOKEN_MISS : "Token miss",
 
 
-    /* Unknown message */
+    /* ANY MESSAGES */
     SOMETHING_WENT_WRONG : "Something went wrong",
-    UNKNOWN_DEVICE : "No device or browser information found"
+    UNKNOWN_DEVICE : "No device or browser information found",
+    SUCCESS : "Success"
     
 }
 

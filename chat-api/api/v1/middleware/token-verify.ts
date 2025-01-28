@@ -5,6 +5,10 @@ import errorCodes from "../common/error-codes";
 
 
 export const accessTokenVerify = genericFunc(async(req,res,next) => {
+    const token = req.headers["authorization"]?.replace("Bearer " , "") 
+    if(!token)
+        throw new ResponseModel(errorCodes.TOKEN_MISS, 400)
+
     const {JWT_KEY, JWT_ISS} = process.env as {
         JWT_KEY: string;
         JWT_ISS: string
@@ -12,10 +16,6 @@ export const accessTokenVerify = genericFunc(async(req,res,next) => {
 
     if(!JWT_KEY && !JWT_ISS)
         throw new ResponseModel(errorCodes.SOMETHING_WENT_WRONG, 500)
-
-    const token = req.headers["authorization"]?.replace("Bearer " , "") 
-    if(!token)
-        throw new ResponseModel(errorCodes.TOKEN_MISS, 400)
 
     const decoded = jwt.verify(token, JWT_KEY)
 
