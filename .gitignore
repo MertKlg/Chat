@@ -1,0 +1,8 @@
+# === Api project ===
+chat-api/node_modules
+.env
+# === Web project ===
+chat-web/node_modules
+chat-web/.nuxt
+chat-web/.output
+chat-web/.gitignore
