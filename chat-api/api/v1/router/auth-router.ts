@@ -1,15 +1,13 @@
 import {Router} from "express"
-import { signIn, signUp } from "../controller/auth-controller"
+import { refreshToken, resetPasssword, signIn, signUp } from "../controller/auth-controller"
 import inputValidator from "../middleware/input-validator"
 import { check } from "express-validator"
 import ResponseModel from "../model/error-model"
 import errorCodes from "../common/error-codes"
-<<<<<<< HEAD
 import uaParserMiddleware from "../middleware/ua-parser"
 import { accessTokenVerify, refreshTokenVerify } from "../middleware/token-verify"
 import { verifyUser } from "../middleware/verify-user"
-=======
->>>>>>> parent of 1a1b01c (Auth update)
+
 
 const authRouter = Router()
 
@@ -44,7 +42,7 @@ authRouter.post("/sign-up", inputValidator([
 
 ]) ,signUp)
 
-<<<<<<< HEAD
+
 
 
 authRouter.post("/sign-in",[
@@ -79,9 +77,8 @@ authRouter.post("/refresh", [
     verifyUser,
     uaParserMiddleware
 ], refreshToken )
-=======
+
 authRouter.post("/sign-in", signIn)
->>>>>>> parent of 1a1b01c (Auth update)
 
 
 export default authRouter

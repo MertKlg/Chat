@@ -1,51 +1,36 @@
 import errorCodes from "../common/error-codes";
 import { genericFunc } from "../common/generic-func";
 import ResponseModel from "../model/error-model";
-<<<<<<< HEAD
 import IUser from "../model/interface/iuser";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import DeviceTypes from "../model/types/device-types";
 import databasePool from "../../../database";
-=======
-import databasePool from "../service/database";
-import bcrypt from "bcrypt"
->>>>>>> parent of 1a1b01c (Auth update)
+import { DeviceTypes } from "../model/types/device-types";
 
 export const signUp = genericFunc(async(req,res,next) => {
     const {username,email,password,phone} = req.body
 
-    const result = await databasePool.query("SELECT `email`,`phone` FROM `users` WHERE email = '"+email+"' OR phone = '"+phone+"'")
+    const result = (await databasePool.query("SELECT `email`,`phone` FROM `users` WHERE email = '"+email+"' OR phone = '"+phone+"'"))[0] as IUser[]
 
-    console.log(result[0], result[1])
-
-<<<<<<< HEAD
-    if(user.length > 0){
-        const message = (`${username}`.trim().toLowerCase().match(user[0].username.trim().toLowerCase())) ? errorCodes.USERNAME_ALREADY_USING :
-        (`${email}`.trim().toLowerCase().match(user[0].email.trim().toLowerCase())) ? errorCodes.EMAIL_ALREADY_USING : 
-        (`${phone}`.trim().toLowerCase().match(user[0].phone.trim().toLowerCase())) ? errorCodes.PHONE_ALREADY_EXISTS : "Something went wrong"
+    if(result.length > 0){
+        const message = (`${username}`.trim().toLowerCase().match(result[0].username.trim().toLowerCase())) ? errorCodes.USERNAME_ALREADY_USING :
+        (`${email}`.trim().toLowerCase().match(result[0].email.trim().toLowerCase())) ? errorCodes.EMAIL_ALREADY_USING : 
+        (`${phone}`.trim().toLowerCase().match(result[0].phone.trim().toLowerCase())) ? errorCodes.PHONE_ALREADY_EXISTS : "Something went wrong"
 
         if(message.length > 0)
           throw new ResponseModel(message, 400)
     }
-=======
-    if(result[1].length > 0)
-        throw new ResponseModel(errorCodes.EMAIL_ALREADY_USING, 400)
->>>>>>> parent of 1a1b01c (Auth update)
- 
 
     const hashPass = await bcrypt.hash(password, parseInt(`${process.env.SALT_ROUND}`))
 
-    const insertResult = await databasePool.query("INSERT INTO `users` ('id', 'username', 'email', 'password', 'phone') VALUES (NULL,'"+username+"','"+email+"','"+hashPass+"','"+phone+"') ")
-    console.log(insertResult)
-
-    res.json(req.body)
+    await databasePool.query("INSERT INTO `users` ('id', 'username', 'email', 'password', 'phone') VALUES (NULL,'"+username+"','"+email+"','"+hashPass+"','"+phone+"') ")
+    res.json(new ResponseModel(errorCodes.SUCCESS, 200))
 })
 
 
 
 export const signIn = genericFunc(async (req,res,next) => {
-<<<<<<< HEAD
+
     const {email,password} = req.body
     const { device,browser,audience } = res.locals
 
@@ -149,8 +134,3 @@ export const refreshToken = genericFunc(async (req,res,next) => {
     }
 
 })
-=======
-    res.json("sign in work!")
-})
-  
->>>>>>> parent of 1a1b01c (Auth update)
