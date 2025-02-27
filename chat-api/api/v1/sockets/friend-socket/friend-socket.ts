@@ -18,13 +18,13 @@ const friendSocket = (socket: Socket) => {
         )
       )[0] as IFriend[];
 
-      socket.emit("get_friends_result", {message : errorCodes.SUCCESS, status : 200, value : request} as ResponseModel);
+      socket.to(users_id).emit("get_friends_result", {message : errorCodes.SUCCESS, status : 200, value : request} as ResponseModel);
     } catch (e) {
         if(e instanceof Error){
-            socket.emit("get_friends_result", {message : e.message, status : 500} as ResponseModel);
+            socket.to(users_id).emit("get_friends_result", {message : e.message, status : 500} as ResponseModel);
             return
         }
-        socket.emit("get_friends_result", {message : "Something went wrong", status : 500} as ResponseModel);
+        socket.to(users_id).emit("get_friends_result", {message : "Something went wrong", status : 500} as ResponseModel);
     }
   });
 
@@ -32,13 +32,13 @@ const friendSocket = (socket: Socket) => {
     try{
       const result = await databasePool.query("select u.users_id, u.username, u.email from users u inner join friends f on f.sender_id = u.users_id where f.receiver_id = ? and f.status = ?",[users_id, 'waiting'])
 
-      socket.emit("get_friend_requests_result", {message : errorCodes.SUCCESS,status : 200, value : result[0] } as ResponseModel)
+      socket.to(users_id).emit("get_friend_requests_result", {message : errorCodes.SUCCESS,status : 200, value : result[0] } as ResponseModel)
     }catch (e) {
       if(e instanceof Error){
-          socket.emit("get_friend_requests_result", { message : e.message, status : 500 } as ResponseModel)
+          socket.to(users_id).emit("get_friend_requests_result", { message : e.message, status : 500 } as ResponseModel)
           return
       }
-      socket.emit("get_friend_requests_result", { message : "Something went wrong", status : 500 } as ResponseModel)
+      socket.to(users_id).emit("get_friend_requests_result", { message : "Something went wrong", status : 500 } as ResponseModel)
   }
   })
 
@@ -54,7 +54,7 @@ const friendSocket = (socket: Socket) => {
       )[0] as IFriend[];
 
       if (checkAlreadyRequestSended.length > 0) {
-        socket.emit("friend_request_result", { message : "Request already sended", status : 400 } as ResponseModel);
+        socket.to(users_id).emit("friend_request_result", { message : "Request already sended", status : 400 } as ResponseModel);
         return;
       }
 
@@ -63,13 +63,13 @@ const friendSocket = (socket: Socket) => {
         [users_id, receiver_id]
       );
 
-      socket.emit("friend_request_result", { message : "Request sended", status : 200 } as ResponseModel);
+      socket.to(users_id).emit("friend_request_result", { message : "Request sended", status : 200 } as ResponseModel);
     } catch (e) {
         if(e instanceof Error){
-            socket.emit("friend_request_result", { message : e.message, status : 500 } as ResponseModel)
+            socket.to(users_id).emit("friend_request_result", { message : e.message, status : 500 } as ResponseModel)
             return
         }
-        socket.emit("friend_request_result", { message : "Something went wrong", status : 500 } as ResponseModel)
+        socket.to(users_id).emit("friend_request_result", { message : "Something went wrong", status : 500 } as ResponseModel)
     }
   });
 
@@ -78,7 +78,7 @@ const friendSocket = (socket: Socket) => {
       const { username } = data;
 
       if (!username) {
-        socket.emit("search_friend_result", { message : "Username required", status : 400} as ResponseModel);
+        socket.to(users_id).emit("search_friend_result", { message : "Username required", status : 400} as ResponseModel);
         return;
       }
 
@@ -107,20 +107,20 @@ const friendSocket = (socket: Socket) => {
         `%${username}%`,
       ]);
 
-      socket.emit("search_friend_result", {
+      socket.to(users_id).emit("search_friend_result", {
         message: "Success",
         status: 200,
         value: result[0],
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
-        socket.emit("search_friend_result", {
+        socket.to(users_id).emit("search_friend_result", {
           message: e.message,
           status: 500,
         } as ResponseModel);
         return;
       }
-      socket.emit("search_friend_result", {
+      socket.to(users_id).emit("search_friend_result", {
         message: "Something went wrong",
         status: 500,
       } as ResponseModel);
@@ -133,10 +133,9 @@ const friendSocket = (socket: Socket) => {
       
       await databasePool.query("update friends f set f.status = ? where receiver_id = ? and sender_id = ?", [status, users_id,sender_id ])
       
-      socket.emit("update_friend_request_result", {message : "Success", status: 200} as ResponseModel)
+      socket.to(users_id).emit("update_friend_request_result", {message : "Success", status: 200} as ResponseModel)
     }catch(e){
-      console.error(e)
-      socket.emit("update_friend_request_result", {message : "Failed", status: 500} as ResponseModel)
+      socket.to(users_id).emit("update_friend_request_result", {message : "Failed", status: 500} as ResponseModel)
 
     }
   })

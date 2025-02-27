@@ -10,18 +10,11 @@ const appSocket = (io : Server) => {
   io.use(socketVerifyUser)
 
     io.on('connection', (socket) => {
-      const {users_id , username, email, phone} = socket.data.user
-
-        socket.join(users_id)
-
-        console.log("a user connected ! ", users_id)
 
         friendSocket(socket)
         chatSocket(socket)
 
-        socket.on('disconnect', () => {
-          console.log('Bir kullanıcı ayrıldı: ' + socket.id, users_id);
-        });
+        socket.on('disconnect', () => {});
       });
 }
 
