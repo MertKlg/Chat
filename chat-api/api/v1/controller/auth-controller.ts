@@ -10,7 +10,7 @@ import { DeviceTypes } from "../model/types/device-types";
 export const signUp = genericFunc(async(req,res,next) => {
     const {username,email,password,phone} = req.body
 
-    const result = (await databasePool.query("SELECT `email`,`phone` FROM `users` WHERE email = '"+email+"' OR phone = '"+phone+"'"))[0] as IUser[]
+    const result = (await databasePool.query("select email, phone from users WHERE email = '"+email+"' OR phone = '"+phone+"'"))[0] as IUser[]
 
     if(result.length > 0){
         const message = (`${username}`.trim().toLowerCase().match(result[0].username.trim().toLowerCase())) ? errorCodes.USERNAME_ALREADY_USING :
@@ -23,7 +23,7 @@ export const signUp = genericFunc(async(req,res,next) => {
 
     const hashPass = await bcrypt.hash(password, parseInt(`${process.env.SALT_ROUND}`))
 
-    await databasePool.query("INSERT INTO `users` ('id', 'username', 'email', 'password', 'phone') VALUES (NULL,'"+username+"','"+email+"','"+hashPass+"','"+phone+"') ")
+    await databasePool.query("insert into users (username,email,password,phone) values(?,?,?,?)",[username,email,hashPass,phone])
     res.json(new ResponseModel(errorCodes.SUCCESS, 200))
 })
 
