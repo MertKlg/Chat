@@ -37,7 +37,7 @@ ORDER BY message.sended_at DESC;`,
 
       const result = query[0];
 
-      socket.to(users_id).emit("get_chats_result", {
+      socket.emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
         value: result,
@@ -74,7 +74,7 @@ ORDER BY message.sended_at DESC;`,
         [chatId, user_id]
       );
 
-      socket.to(users_id).emit("create_chat_result", {
+      socket.emit("create_chat_result", {
         message: errorCodes.SUCCESS,
         status: 200,
       } as ResponseModel);

@@ -33,16 +33,17 @@ export const signIn = genericFunc(async (req,res,next) => {
 
     const {email,password} = req.body
     const { device,browser,audience } = res.locals
-
+    
     if (!device && !browser) {
         throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500);
     }
 
-    const findUser = await databasePool.query("SELECT `email`,`password` from `users` WHERE email = ?",[email])
+    const findUser = await databasePool.query(`select users.email, users.password from users where email = ?`,[email])
     const user = findUser[0] as IUser[]
-
-    if(user.length < 0)
+    
+    if(user.length <= 0)
         throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
+
 
     const checkPassword = await bcrypt.compare(password, user[0].password)
 

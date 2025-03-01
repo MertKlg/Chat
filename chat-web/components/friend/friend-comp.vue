@@ -15,7 +15,7 @@
         </div>
 
         <div v-show="showMenu == ShowMenu.friends">
-            
+
             <div class="col mt-3">
                 <h5 class="fs-4">Friends</h5>
                 <div v-if="objects.friends.length < 1">
@@ -38,10 +38,9 @@
 
         <div v-show="showMenu == ShowMenu.add_friend">
 
-            <input v-model="search" @input="searchQuery"
-                @focus="objects.showFriendsRequest = false, showResult = true"
-                @blur="objects.showFriendsRequest = true, showResult = false, search = ''" name="search" class="form-control"
-                id="search" type="text" aria-placeholder="search" placeholder="Search" />
+            <input v-model="search" @input="searchQuery" @focus="objects.showFriendsRequest = false, showResult = true"
+                @blur="objects.showFriendsRequest = true, showResult = false, search = ''" name="search"
+                class="form-control" id="search" type="text" aria-placeholder="search" placeholder="Search" />
 
             <div class="mt-2" v-show="objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
                 <h5>Friend requests</h5>
@@ -53,11 +52,13 @@
                             </div>
 
                             <div class="d-flex">
-                                <button class="btn btn-success mx-1" @click="setFriendRequest(item, EFriendStatus.ACCEPT )">
+                                <button class="btn btn-success mx-1"
+                                    @click="setFriendRequest(item, EFriendStatus.ACCEPT)">
                                     Accept
                                 </button>
 
-                                <button class="btn btn-danger mx-1" @click="setFriendRequest(item, EFriendStatus.REJECT)">
+                                <button class="btn btn-danger mx-1"
+                                    @click="setFriendRequest(item, EFriendStatus.REJECT)">
                                     Reject
                                 </button>
                             </div>
@@ -137,9 +138,10 @@ const validator = yup.object({
 
 /* Setup  */
 onMounted(() => {
-    $socket.emit("get_friends", { status: "accepted" })
+    $socket.emit("get_friends")
     $socket.emit("get_friend_requests")
 })
+
 
 
 watch(search, (newValue) => {
@@ -155,8 +157,8 @@ const sendFriendRequest = (user: IUser) => {
     $socket.emit("friend_request", { receiver_id: user.users_id })
 }
 
-const setFriendRequest = (user : IUser, status_type : EFriendStatus) => {
-    $socket.emit('update_friend_request',{ sender_id : user.users_id, status : status_type })
+const setFriendRequest = (user: IUser, status_type: EFriendStatus) => {
+    $socket.emit('update_friend_request', { sender_id: user.users_id, status: status_type })
 }
 
 
@@ -165,6 +167,7 @@ const setFriendRequest = (user : IUser, status_type : EFriendStatus) => {
 $socket.on("search_friend_result", (response) => {
     try {
         const res = response as IResponse
+        console.log(res)
         objects.searchedFriends = res.value as friend[]
     } catch (e) {
         console.error(e)
@@ -172,9 +175,10 @@ $socket.on("search_friend_result", (response) => {
 })
 
 $socket.on("get_friends_result", (response) => {
+    console.log(response)
+    console.log("get_friends_result tirggered")
     try {
         const res = response as IResponse
-        
         objects.friends.push(...res.value)
     } catch (e) {
         console.error(e)
@@ -198,14 +202,14 @@ $socket.on("friend_request_result", (response) => {
 
 
 $socket.on("update_friend_request_result", (response) => {
-    try{
+    try {
         const res = response as IResponse
-        if(res.status == 200){
-            toast.success({title : "Accepted", description : ""})
-        }else{
-            toast.error({title : "Rejected", description : ""})
+        if (res.status == 200) {
+            toast.success({ title: "Accepted", description: "" })
+        } else {
+            toast.error({ title: "Rejected", description: "" })
         }
-    }catch(e){
+    } catch (e) {
 
     }
 })
