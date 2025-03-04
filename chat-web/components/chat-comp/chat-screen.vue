@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+import { object } from 'yup';
 import type IResponse from '~/model/response';
 import profileStore from '~/store/profile-store';
 
@@ -38,12 +39,15 @@ const props = defineProps(["chat_id"])
 const messages = ref<IMessages[]>([])
 var newMessage = ref("")
 
+$socket.emit("join_chat_room", {chat_id : props.chat_id})
 $socket.emit("get_chat_messages", {chat_id : props.chat_id})
+
 
 $socket.on("get_chat_messages_result", (response) => {
     try{
         const res = response as IResponse
-        messages.value = res.value as IMessages[]
+        const gettedMessages = res.value as IMessages[]
+        messages.value.push(...gettedMessages)
     }catch(e){
         console.error(e)
     }
@@ -54,7 +58,7 @@ const sendMessage = () => {
     $socket.emit("send_chat_message", {chat_id : props.chat_id, message : newMessage.value})
 }
 
-$socket.on("send_chat_message", (response) => {
+$socket.on("send_chat_message_result", (response) => {
     try{
         const res = response as IResponse
         if(res.status == 200){

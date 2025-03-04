@@ -1,13 +1,13 @@
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 import databasePool from "../../../../database";
 import ResponseModel from "../../model/error-model";
 import IFriend from "../../model/interface/ifriend";
-import IUser from "../../model/interface/iuser";
-import IResponse from "../../model/interface/iresponse";
 import errorCodes from "../../common/error-codes";
+import onlineUserPool from "../pool/online-user-pool";
 
-const friendSocket = (socket: Socket) => {
-  const { users_id } = socket.data.user;
+
+const friendSocket = (socket: Socket, io : Server) => {
+  const { users_id,username } = socket.data.user;
   
   socket.on("get_friends", async (data) => {
     try {
@@ -63,6 +63,10 @@ const friendSocket = (socket: Socket) => {
         "insert into friends (sender_id, receiver_id) values (?,?)",
         [users_id, receiver_id]
       );
+
+      const onlineUser = onlineUserPool.getUserSocketId(receiver_id)
+      if(onlineUser)
+        socket.to(onlineUser).emit("friend_request_getted_result",{ message : "A new friends request", status: 200, value : [{username : username}] } as ResponseModel)
 
       socket.emit("friend_request_result", { message : "Request sended", status : 200 } as ResponseModel);
     } catch (e) {

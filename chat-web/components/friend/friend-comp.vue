@@ -39,7 +39,8 @@
         <div v-show="showMenu == ShowMenu.add_friend">
 
             <input v-model="search" @input="searchQuery" @focus="objects.showFriendsRequest = false, showResult = true"
-                @blur="objects.showFriendsRequest = true, showResult = false, search = ''" name="search"
+            @blur="showResult = false, search = ''"
+                 name="search"
                 class="form-control" id="search" type="text" aria-placeholder="search" placeholder="Search" />
 
             <div class="mt-2" v-show="objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
@@ -220,6 +221,18 @@ $socket.on("get_friend_requests_result", (response) => {
 
         objects.getFriendRequests = (res.value as IUser[])
     } catch (e) {
+        console.error(e)
+    }
+})
+
+$socket.on("friend_request_getted_result", (response) => {
+    try{
+        const res = response as IResponse
+
+        if(res.status == 200){
+            toast.success({ title: res.message, description: "" })
+        }
+    }catch(e){
         console.error(e)
     }
 })

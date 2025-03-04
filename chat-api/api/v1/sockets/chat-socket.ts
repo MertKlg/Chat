@@ -1,7 +1,8 @@
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 import databasePool from "../../../database";
 import ResponseModel from "../model/error-model";
 import errorCodes from "../common/error-codes";
+import onlineChatPool from "./pool/online-chat-pool";
 
 interface IChatTable {
   chat_id: number;
@@ -9,12 +10,26 @@ interface IChatTable {
   created_at: Date;
 }
 
+interface IMessages{
+  username : string,
+  chat_message_id : string,
+  message : string,
+  user_id : number,
+  sended_at : string
+}
+
 interface IuuidResult {
   uuid: string;
 }
 
-const chatSocket = (socket: Socket) => {
-  const { users_id } = socket.data.user;
+const chatSocket = (socket: Socket, io : Server) => {
+  const { users_id,username } = socket.data.user;
+
+  socket.on("join_chat_room", (data) => {
+    const {chat_id} = data
+    socket.join(chat_id)
+  })
+
   socket.on("get_chats", async () => {
     try {
       const query = await databasePool.query(
@@ -57,8 +72,6 @@ ORDER BY message.sended_at DESC;`,
       )[0] as IuuidResult[];
       const chatId = uuidResult[0].uuid;
 
-      console.log(chatId);
-
       await databasePool.query(
         "INSERT INTO chat_table(chat_id,chat_type) VALUES(UUID_TO_BIN(?),'Personal')",
         [chatId]
@@ -95,7 +108,7 @@ WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC
         [chat_id]
       );
 
-      socket.to(chat_id).emit("get_chat_messages_result", {
+      socket.emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
         value: databaseQuery[0],
@@ -123,8 +136,12 @@ WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC
 
       await databasePool.query(`insert into chat_messages(message, user_id, chat_id) values(?, ?, UUID_to_bin(?))`, [message,users_id,chat_id])
 
-      socket.emit("get_chat_messages", {chat_id : chat_id})
-      socket.to(chat_id).emit("send_chat_message", {message : errorCodes.SUCCESS, status : 200} as ResponseModel)
+      const query = await databasePool.query(`select user.users_id as user_id,user.username, message.message, message.chat_message_id, message.sended_at, bin_to_uuid(message.chat_id) as chat_id from chat_messages message inner join users user on message.user_id = user.users_id where user_id = ? and bin_to_uuid(chat_id) = ? ORDER BY message.sended_at DESC limit 1`,[users_id, chat_id]);
+      socket.emit("send_chat_message_result", {
+        message: errorCodes.SUCCESS,
+        status: 200,
+      } as ResponseModel)
+      io.to(chat_id).emit("get_chat_messages_result",{message: errorCodes.SUCCESS, status : 200, value : query[0] } as ResponseModel)
     }catch(e){
       if(e instanceof Error){
         socket.emit("get_chat_messages_result", {
