@@ -1,5 +1,5 @@
 import { API_URL } from "~/common/API"
-import type IResponse from "~/model/response"
+import type IResponse from "~/model/interfaces/iresponse"
 import authStore from "./auth-store"
 import genericFetch from "~/common/genericFetch"
 

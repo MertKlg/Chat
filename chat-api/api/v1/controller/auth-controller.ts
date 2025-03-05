@@ -10,8 +10,7 @@ import { DeviceTypes } from "../model/types/device-types";
 export const signUp = genericFunc(async(req,res,next) => {
     const {username,email,password,phone} = req.body
 
-    const result = (await databasePool.query("select email, phone from users WHERE email = '"+email+"' OR phone = '"+phone+"'"))[0] as IUser[]
-
+    const result = (await databasePool.query("select lower(username) as username , lower(email) as email, lower(phone) as phone from users where email = lower(?) or phone = lower(?)", [email,phone]))[0] as IUser[]
     if(result.length > 0){
         const message = (`${username}`.trim().toLowerCase().match(result[0].username.trim().toLowerCase())) ? errorCodes.USERNAME_ALREADY_USING :
         (`${email}`.trim().toLowerCase().match(result[0].email.trim().toLowerCase())) ? errorCodes.EMAIL_ALREADY_USING : 

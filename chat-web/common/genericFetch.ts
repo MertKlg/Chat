@@ -1,6 +1,6 @@
 import type { Store, StoreDefinition } from "pinia";
 import { bool, boolean } from "yup";
-import type IResponse from "~/model/response";
+import type IResponse from "~/model/interfaces/iresponse";
 import authStore from "~/store/auth-store";
 
 interface IFetch {

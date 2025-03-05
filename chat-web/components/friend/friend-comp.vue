@@ -39,7 +39,7 @@
         <div v-show="showMenu == ShowMenu.add_friend">
 
             <input v-model="search" @input="searchQuery" @focus="objects.showFriendsRequest = false, showResult = true"
-            @blur="showResult = false, search = ''"
+            
                  name="search"
                 class="form-control" id="search" type="text" aria-placeholder="search" placeholder="Search" />
 
@@ -96,8 +96,8 @@
 import { reactive, ref, watch } from 'vue';
 import { Form, Field, ErrorMessage } from "vee-validate"
 import * as yup from "yup"
-import IUser from '~/model/i_user';
-import type IResponse from '~/model/response';
+import IUser from '~/model/interfaces/iuser';
+import type IResponse from '~/model/interfaces/iresponse';
 import toastStore from '~/store/toast-store';
 import { EFriendStatus } from '~/model/enum/e_friend_status';
 

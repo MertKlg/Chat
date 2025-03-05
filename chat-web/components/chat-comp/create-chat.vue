@@ -22,8 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import type IUser from '~/model/i_user';
-import type IResponse from '~/model/response';
+import type IUser from '~/model/interfaces/iuser';
+import type IResponse from '~/model/interfaces/iresponse';
 
 const { $socket } = useNuxtApp();
 

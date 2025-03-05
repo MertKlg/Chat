@@ -1,6 +1,6 @@
 import { API_URL } from "~/common/API";
 import genericFetch from "~/common/genericFetch";
-import type IResponse from "~/model/response";
+import type IResponse from "~/model/interfaces/iresponse";
 
 const authStore = defineStore("authStore", () => {
     const isAuthanticated = ref(false);

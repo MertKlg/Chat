@@ -33,7 +33,7 @@ const chatSocket = (socket: Socket, io : Server) => {
   socket.on("get_chats", async () => {
     try {
       const query = await databasePool.query(
-        `select user.username, user.users_id, message.message, BIN_TO_UUID(message.chat_id) as chat_id from chat_members member 
+        `select user.username, user.users_id, message.message, BIN_TO_UUID(member.chat_id) as chat_id from chat_members member 
 inner join users user on user.users_id = member.user_id 
 LEFT JOIN chat_messages message 
     ON member.chat_id = message.chat_id 
@@ -48,8 +48,8 @@ WHERE member.chat_id IN (
 AND member.user_id != ?
 ORDER BY message.sended_at DESC;`,
         [users_id, users_id]
-      );
-
+      ); 
+      
       const result = query[0];
 
       socket.emit("get_chats_result", {
@@ -141,7 +141,33 @@ WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC
         message: errorCodes.SUCCESS,
         status: 200,
       } as ResponseModel)
+      
       io.to(chat_id).emit("get_chat_messages_result",{message: errorCodes.SUCCESS, status : 200, value : query[0] } as ResponseModel)
+
+      const lastMessageQuery = await databasePool.query(`SELECT
+    user.username,
+    user.users_id,
+    message.message,
+    BIN_TO_UUID(member.chat_id) AS chat_id
+FROM
+    chat_members member
+INNER JOIN
+    users user ON user.users_id = member.user_id
+LEFT JOIN
+    chat_messages message
+        ON member.chat_id = message.chat_id
+        AND message.sended_at = (
+            SELECT MAX(m2.sended_at)
+            FROM chat_messages m2
+            WHERE m2.chat_id = member.chat_id
+        )
+WHERE
+    member.chat_id = UUID_TO_BIN(?)
+ORDER BY
+    message.sended_at DESC LIMIT 1`, [chat_id, users_id])
+
+      // TODO : We need to send last message to rooms
+      io.to(chat_id).emit("get_chats_result", {message: errorCodes.SUCCESS, status : 200, value : lastMessageQuery[0] } as ResponseModel)
     }catch(e){
       if(e instanceof Error){
         socket.emit("get_chat_messages_result", {

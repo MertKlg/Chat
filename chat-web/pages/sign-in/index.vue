@@ -4,7 +4,7 @@ import { API_URL } from '~/common/API';
 import * as yup from 'yup';
 import { Form,Field,ErrorMessage,useForm } from 'vee-validate';
 import toastStore from '~/store/toast-store';
-import type IResponse from '~/model/response';
+import type IResponse from '~/model/interfaces/iresponse';
 import { useFetch } from '#app';
 
 const toast = toastStore()

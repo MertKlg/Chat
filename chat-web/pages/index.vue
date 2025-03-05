@@ -52,7 +52,7 @@ import { ref } from "vue";
 import ChatScreen from "~/components/chat-comp/chat-screen.vue";
 import CreateChat from "~/components/chat-comp/create-chat.vue";
 import FriendComp from "~/components/friend/friend-comp.vue";
-import type IResponse from "~/model/response";
+import type IResponse from "~/model/interfaces/iresponse";
 
 interface IChat {
   users_id: number,
@@ -67,19 +67,28 @@ const currentComp = ref<{ component: any, props: {} }>({ component: StarterComp,
 
 const { $socket } = useNuxtApp()
 
-onMounted(() => {
-  if($socket){
-    $socket.connect();
-    $socket.emit("get_chats")
-  }
-});
+if ($socket) {
+  $socket.connect();
+  $socket.emit("get_chats")
+}
 
 $socket.on("get_chats_result", (response) => {
   try {
-    chats.value = []
     const res = response as IResponse
-    chats.value = res.value as IChat[]
+    const chatResponse = res.value as IChat[]
 
+    if(chats.value.length <= 0){
+      chats.value = chatResponse
+      return
+    }
+
+    const findRelatedChat = chatResponse.find(e => chats.value.find(d => e.chat_id == d.chat_id))
+
+    if(!findRelatedChat){
+      return
+    }
+
+    chats.value.find(e => e.chat_id == findRelatedChat.chat_id)!.message = findRelatedChat.message
   } catch (e) {
     console.error(e)
   }
