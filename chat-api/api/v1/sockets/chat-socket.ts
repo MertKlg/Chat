@@ -133,8 +133,10 @@ WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC
   socket.on("send_chat_message", async(data) => {
     try{
       const { chat_id,message } = data
+      
+      
 
-      await databasePool.query(`insert into chat_messages(message, user_id, chat_id) values(?, ?, UUID_to_bin(?))`, [message,users_id,chat_id])
+      await databasePool.query(`insert into chat_messages(message, user_id, chat_id) values(?, ?, uuid_to_bin(?))`, [message,users_id,chat_id])
 
       const query = await databasePool.query(`select user.users_id as user_id,user.username, message.message, message.chat_message_id, message.sended_at, bin_to_uuid(message.chat_id) as chat_id from chat_messages message inner join users user on message.user_id = user.users_id where user_id = ? and bin_to_uuid(chat_id) = ? ORDER BY message.sended_at DESC limit 1`,[users_id, chat_id]);
       socket.emit("send_chat_message_result", {
@@ -166,7 +168,7 @@ WHERE
 ORDER BY
     message.sended_at DESC LIMIT 1`, [chat_id, users_id])
 
-      // TODO : We need to send last message to rooms
+      
       io.to(chat_id).emit("get_chats_result", {message: errorCodes.SUCCESS, status : 200, value : lastMessageQuery[0] } as ResponseModel)
     }catch(e){
       if(e instanceof Error){
