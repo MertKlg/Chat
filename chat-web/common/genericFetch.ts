@@ -1,6 +1,7 @@
 import type { Store, StoreDefinition } from "pinia";
 import { bool, boolean } from "yup";
 import type IResponse from "~/model/interfaces/iresponse";
+import ResponseModel from "~/model/response-model";
 import authStore from "~/store/auth-store";
 
 interface IFetch {
@@ -8,7 +9,7 @@ interface IFetch {
   method: Methods;
   body: any | undefined;
   credentials: Credentials;
-  immediate: boolean;
+  immediate: boolean | false
 }
 
 type Credentials = "same-origin" | "include" | "omit";

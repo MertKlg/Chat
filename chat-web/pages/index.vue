@@ -12,9 +12,6 @@
 <script lang="ts" setup>
 import { StarterComp } from "#components";
 import { shallowRef,ref } from "vue";
-import ChatScreen from "~/components/chat-comp/chat-screen.vue";
-import CreateChat from "~/components/chat-comp/create-chat.vue";
-import FriendActions from "~/components/friend/friend-actions.vue";
 import ChatMenu from "~/components/menu-comp/chat-menu.vue";
 useHead({
   title : "Chat"

@@ -19,6 +19,7 @@ const errorCodes = {
     /* PHONE ERRORS */
     PHONE_ALREADY_EXISTS : "That phone number already exists",
     PHONE_NOT_VALIDATED : "This phone number not validated",
+    PHONE_EMPTY : "Phone number empty",
 
 
     /* AUTH MESSAGES */

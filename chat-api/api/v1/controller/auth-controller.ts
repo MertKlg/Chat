@@ -134,3 +134,4 @@ export const refreshToken = genericFunc(async (req,res,next) => {
     }
 
 })
+
