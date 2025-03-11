@@ -7,8 +7,8 @@ import { Request } from "express";
 
 type TokenType = "access_token" | "refresh_token"
 
-export const accessTokenVerify = genericFunc(async(req,res,next) => {
-    
+export const accessTokenVerify = genericFunc((req,res,next) => {
+
     const token = extractToken("access_token",req)
 
     if(!token)
@@ -32,7 +32,7 @@ export const accessTokenVerify = genericFunc(async(req,res,next) => {
 })
 
 
-export const refreshTokenVerify = genericFunc(async(req,res,next) => {
+export const refreshTokenVerify = genericFunc((req,res,next) => {
 
     const token = extractToken("refresh_token", req)
     if(!token)

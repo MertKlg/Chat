@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import databasePool from "../../../../database";
+import databasePool from "../../../../service/database";
 import ResponseModel from "../../model/error-model";
 import IFriend from "../../model/interface/ifriend";
 import errorCodes from "../../common/error-codes";

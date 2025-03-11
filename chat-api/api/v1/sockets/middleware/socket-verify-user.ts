@@ -1,5 +1,5 @@
 import { ExtendedError, Socket } from "socket.io";
-import databasePool from "../../../../database";
+import databasePool from "../../../../service/database";
 import IUser from "../../model/interface/iuser";
 
 

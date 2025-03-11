@@ -1,4 +1,4 @@
-import databasePool from "../../../database";
+import databasePool from "../../../service/database";
 import errorCodes from "../common/error-codes";
 import { genericFunc } from "../common/generic-func";
 import ResponseModel from "../model/error-model";

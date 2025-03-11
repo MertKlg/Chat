@@ -1,15 +1,8 @@
-import { API_URL } from "~/common/API"
+import { API_URL, STORAGE } from "~/common/API"
 import type IResponse from "~/model/interfaces/iresponse"
 import authStore from "./auth-store"
 import genericFetch from "~/common/genericFetch"
-
-
-interface IUser {
-    users_id : number,
-    username : string,
-    email : string,
-    phone : string,
-}
+import type IUser from "~/model/interfaces/iuser"
 
 const profileStore = defineStore("profileStore", () => {
 
@@ -17,10 +10,6 @@ const profileStore = defineStore("profileStore", () => {
 
     const getProfile = async () => {
         try{
-            if(userProfile.value){
-                return
-            }
-    
             const res = await genericFetch(
                 {
                   url:  `${API_URL}/profile/get`,
@@ -35,8 +24,12 @@ const profileStore = defineStore("profileStore", () => {
                 if(res.value.length > 0){
                     userProfile.value = res.value[0]
                 }
+
+                console.log(userProfile.value)
             }
-        }catch(e){}
+        }catch(e){
+            console.error("Profile store error : ", e)
+        }
     }
 
     return { userProfile, getProfile }

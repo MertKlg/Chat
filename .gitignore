@@ -1,8 +1,10 @@
 # === Api project ===
 chat-api/node_modules
+chat-api/storage
 .env
 # === Web project ===
 chat-web/node_modules
 chat-web/.nuxt
 chat-web/.output
 chat-web/.gitignore
+

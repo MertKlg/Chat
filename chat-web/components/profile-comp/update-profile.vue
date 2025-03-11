@@ -8,7 +8,7 @@
                     </div>
                     <div class="card-body">
                         <div class="text-center mb-4">
-                            <img :src="'https://placehold.co/150x150'" alt="Profile Image" class="rounded-circle"
+                            <img :src="updatedProfile.photo" alt="Profile Image" class="rounded-circle"
                                 style="width: 150px; height: 150px; object-fit: cover;" />
                         </div>
                         <div class="mb-3">
@@ -44,6 +44,7 @@ const updatedProfile = reactive({
     username: profile.userProfile?.username || '',
     email: profile.userProfile?.email || '',
     phone: profile.userProfile?.phone || '',
+    photo : profile.userProfile?.phone || 'http://localhost:8080/storage/defaults/default_profile_photo.png',
 });
 
 

@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { accessTokenVerify } from "../middleware/token-verify";
 import { verifyUser } from "../middleware/verify-user";
-import { getProfile, updateProfile } from "../controller/profile-controller";
+import { getProfile, updateProfile, updateProfilePhoto } from "../controller/profile-controller";
 import uaParserMiddleware from "../middleware/ua-parser";
 import errorCodes from "../common/error-codes";
 import { check } from "express-validator";
 import inputValidator from "../middleware/input-validator";
+import imageStorage from "../../../service/image-storage";
 
 const profileRouter = Router()
-
 
 profileRouter.get("/get",[
     uaParserMiddleware,
@@ -23,6 +23,7 @@ profileRouter.put(
         verifyUser,
         inputValidator([
             check("username")
+                .optional()
                 .not()
                 .isEmpty()
                 .withMessage(errorCodes.USERNAME_EMPTY)
@@ -30,6 +31,7 @@ profileRouter.put(
                 .trim(),
 
             check("email")
+            .optional()
                 .not()
                 .isEmpty()
                 .withMessage(errorCodes.EMAIL_EMPTY)
@@ -39,6 +41,7 @@ profileRouter.put(
                 .trim(),
 
             check("phone")
+            .optional()
                 .not()
                 .isEmpty()
                 .withMessage(errorCodes.PHONE_EMPTY)
@@ -47,9 +50,16 @@ profileRouter.put(
                 .escape()
                 .trim(),
         ]),
+        
     ],
     updateProfile
 );
+
+profileRouter.put("/update-photo", [
+    accessTokenVerify,
+    verifyUser,
+    imageStorage.single('photo')
+], updateProfilePhoto)
 
 
 export default profileRouter

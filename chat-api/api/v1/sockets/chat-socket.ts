@@ -1,21 +1,14 @@
 import { Server, Socket } from "socket.io";
-import databasePool from "../../../database";
+import databasePool from "../../../service/database";
 import ResponseModel from "../model/error-model";
 import errorCodes from "../common/error-codes";
-import onlineChatPool from "./pool/online-chat-pool";
 
-interface IChatTable {
-  chat_id: number;
-  chat_type: string;
-  created_at: Date;
-}
-
-interface IMessages{
+interface IChat{
   username : string,
-  chat_message_id : string,
+  photo : string,
+  users_id : string,
   message : string,
-  user_id : number,
-  sended_at : string
+  chat_id : string
 }
 
 interface IuuidResult {
@@ -32,8 +25,8 @@ const chatSocket = (socket: Socket, io : Server) => {
 
   socket.on("get_chats", async () => {
     try {
-      const query = await databasePool.query(
-        `select user.username, user.users_id, message.message, BIN_TO_UUID(member.chat_id) as chat_id from chat_members member 
+      const query = (await databasePool.query(
+        `select user.username, user.photo, user.users_id, message.message, BIN_TO_UUID(member.chat_id) as chat_id from chat_members member 
 inner join users user on user.users_id = member.user_id 
 LEFT JOIN chat_messages message 
     ON member.chat_id = message.chat_id 
@@ -48,14 +41,23 @@ WHERE member.chat_id IN (
 AND member.user_id != ?
 ORDER BY message.sended_at DESC;`,
         [users_id, users_id]
-      ); 
+      ))[0] as IChat[]; 
+
+    
+      query.map(e => {
+        if(e.photo){
+          e.photo = `/storage/${query[0].users_id}/${query[0].photo}`
+        }else{
+          e.photo = `/storage/defaults/default_profile_image.png`
+        }
+      })
       
-      const result = query[0];
+
 
       socket.emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: result,
+        value: query,
       } as ResponseModel);
     } catch (e) {
       console.error(e);

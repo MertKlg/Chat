@@ -5,13 +5,15 @@ import bodyParser from "body-parser"
 import cookieParser from "cookie-parser"
 import v1Router from "./api/v1"
 import http from "http"
-import "./database"
+import "./service/database"
 import { Server } from 'socket.io'
 import cors from "cors"
 import appSocket from './api/v1/sockets'
 
 const port = 8080
 const app = express()
+
+app.use('/storage', express.static('storage'))
 
 const server = http.createServer(app)
 const io = new Server(server, {
@@ -20,6 +22,8 @@ const io = new Server(server, {
         credentials : true,
     }
 })
+
+
 
 app.use(cors({
     origin : ["http://localhost:3000","http://localhost:3001","http://localhost:3002"],

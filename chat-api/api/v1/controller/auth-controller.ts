@@ -4,7 +4,7 @@ import ResponseModel from "../model/error-model";
 import IUser from "../model/interface/iuser";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import databasePool from "../../../database";
+import databasePool from "../../../service/database";
 import { DeviceTypes } from "../model/types/device-types";
 
 export const signUp = genericFunc(async(req,res,next) => {
@@ -22,7 +22,7 @@ export const signUp = genericFunc(async(req,res,next) => {
 
     const hashPass = await bcrypt.hash(password, parseInt(`${process.env.SALT_ROUND}`))
 
-    await databasePool.query("insert into users (username,email,password,phone) values(?,?,?,?)",[username,email,hashPass,phone])
+    await databasePool.query("insert into users (username,email,password,phone,photo) values(?,?,?,?,?)",[username,email,hashPass,phone, 'default_profile_image.png'])
     res.json(new ResponseModel(errorCodes.SUCCESS, 200))
 })
 

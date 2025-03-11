@@ -17,15 +17,17 @@
 
     <div class="flex-grow-1 overflow-auto p-2">
       <ul class="list-group">
-        <li class="list-group-item list-group-item-action" style="cursor: pointer;" v-for="chat in chats" @click="changeComp(ChatScreen, {chat_id : chat.chat_id})"
-          :key="chat.chat_id">
+        <li class="list-group-item list-group-item-action" style="cursor: pointer;" v-for="chat in chats"
+          @click="changeComp(ChatScreen, { chat_id: chat.chat_id })" :key="chat.chat_id">
 
           <div>
             <div class="d-flex align-items-center">
-              <span class="material-symbols-outlined p-0 m-0">
-                account_circle
-              </span>
-
+              <img :src="BASE_URL + chat.photo" style="
+           width: 50px;
+           height: 50px;
+           overflow: hidden;
+           border-radius: 50%;
+           " class="rounded-circle" alt="User profile photo" />
               <span class="ms-2 fw-bold">
                 {{ chat.username }}
               </span>
@@ -41,9 +43,14 @@
 
     <div class="p-2 border-top">
       <div class="d-flex align-items-center" @click="changeComp(Profile)" style="cursor: pointer;">
-        <span class="material-symbols-outlined p-0 m-0">
-          account_circle
-        </span>
+
+        <img :src="BASE_URL + profile.userProfile?.photo" style="
+          width: 50px;
+          height: 50px;
+          overflow: hidden;
+          border-radius: 50%;
+        " class="rounded-circle" alt="User profile photo" />
+
         <div class="ms-2">
           <h6 class="mb-0">{{ profile.userProfile?.username }}</h6>
           <small>Check your profile</small>
@@ -53,52 +60,6 @@
   </div>
 </template>
 
-
-<!--<template>
-  <div class="col-3 h-100 position-relative">
-    <div class="col">
-        <div class="row p-0 m-0 text-center my-2">
-          <div class="col border rounded mx-2 d-flex align-items-center justify-content-center" style="cursor: pointer;"
-            @click="changeComp(CreateChat)">
-            <span class="material-symbols-outlined py-2">
-              edit_square
-            </span>
-          </div>
-
-          <div class="col border position-relative rounded mx-2" style="cursor: pointer;"
-            @click="changeComp(FriendComp)">
-            <span class="material-symbols-outlined py-2">
-              person
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="col h-100 overflow-auto">
-        <ul class="list-group">
-          <li class="list-group-item list-group-item-action" v-for="item in chats" :key="item.users_id" style="cursor: pointer;"
-            @click="changeComp(ChatScreen, { chat_id: item.chat_id })">
-            <div class="row align-items-center">
-              <div class="col">
-                <span class="material-symbols-outlined ">
-                  person
-                </span>
-              </div>
-              <div class="col">
-                <h6>{{ item.username }}</h6>
-                <p>{{ item.message }}</p>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <div class="col">
-        <h1>asdad</h1>
-      </div>
-    </div>
-</template>-->
-
 <script lang="ts" setup>
 import type IResponse from '~/model/interfaces/iresponse'
 import ChatScreen from "@/components/chat-comp/chat-screen.vue";
@@ -106,11 +67,12 @@ import CreateChat from "@/components/chat-comp/create-chat.vue";
 import FriendComp from "@/components/friend/friend-comp.vue";
 import profileStore from '~/store/profile-store';
 import Profile from '../profile-comp/profile.vue';
-import { NavItem } from '#components';
+import { BASE_URL, STORAGE } from '~/common/API';
 
 interface IChat {
   users_id: number,
   username: string,
+  photo: string,
   message: string,
   chat_id: string
 }

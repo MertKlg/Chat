@@ -3,5 +3,6 @@ export default interface IUser{
     username : string,
     email : string,
     password : string,
-    phone : string
+    phone : string,
+    photo : string
 }
