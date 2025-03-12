@@ -1,3 +1,5 @@
+import type IResponse from "~/model/interfaces/iresponse";
+
 export type TToastStatus = "success" | "warning" | "error";
 
 type ToastPayload = {
@@ -35,8 +37,6 @@ const toastStore = defineStore("toastStore", () => {
 
   const success = (payload: ToastPayload) => {
     add(payload, "success");
-
-    console.log(toasts);
   };
 
   const error = (payload: ToastPayload) => {
@@ -51,7 +51,15 @@ const toastStore = defineStore("toastStore", () => {
     toasts.value = toasts.value.filter((e) => e.id != id);
   };
 
-  return { toasts, success, error, warning, remove };
+  const sendToastWithResponse = (res : IResponse) => {
+    if(res.status === 200){
+      add({title : res.message , description : ''}, "success")
+    }else{
+      add({title : res.message , description : ''}, "error")
+    }
+  }
+
+  return { toasts, success, error, warning, remove,sendToastWithResponse };
 });
 
 export default toastStore;

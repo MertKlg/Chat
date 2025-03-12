@@ -1,5 +1,5 @@
 export enum EFriendStatus {
-    ACCEPT = "Accepted",
-    REJECT = "Rejected",
-    WAITING = "Waiting"
+    ACCEPT = "ACCEPTED",
+    REJECT = "REJECTED",
+    WAITING = "WAITING"
 }

@@ -1,50 +1,69 @@
 <template>
-    <div class="container h-100 py-1">
-        <div class="chat-screen h-100">
-            <div class="d-flex flex-column w-100 h-100">
-                <div class="chat-messages flex-grow-1 overflow-auto" id="chat-messages">
-                    <div v-for="message in messages" :key="message.chat_message_id" class="message"
-                        :class="{ 'message-sent': message.user_id === profile.userProfile?.users_id, 'message-received': message.user_id !== profile.userProfile?.users_id }">
-                        <div class="border-bottom mb-2 d-flex align-items-center">
-                            <span class="material-symbols-outlined">
-                                person
-                            </span>
-                            <div class="ms-2">
-                                {{ message.username }}
-                            </div>
-                        </div>
-
-                        <div class="message-content">
-                            {{ message.message }}
-                        </div>
-                        <div class="message-time">
-                            {{ message.sended_at }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chat-input">
-                    <input type="text" v-model="newMessage" placeholder="Type...." class="form-control"
-                        @keyup.enter="sendMessage" />
-                    <button class="btn btn-primary" @click="sendMessage">Send</button>
-                </div>
-            </div>
+    <div class="container h-100">
+      <div class="chat-screen h-100 d-flex flex-column">
+        <div class="chat-header bg-light p-3 border-bottom">
+          <h5 class="m-0">Chat</h5>
         </div>
+        <div class="chat-messages flex-grow-1 overflow-auto px-3" id="chat-messages">
+          <div v-for="message in messages" :key="message.chat_message_id"
+               :class="{ 'd-flex': true, 
+               'message': true,
+                'mb-3': true, 
+                 'flex-row': message.user_id !== profile.userProfile?.users_id, 
+                 'justify-content-end': message.user_id === profile.userProfile?.users_id,
+                  'justify-content-start': message.user_id !== profile.userProfile?.users_id 
+                  }">
+  
+            <div v-if="message.user_id !== profile.userProfile?.users_id" class="profile-image-container rounded-circle overflow-hidden me-2" style="width: 35px; height: 35px;">
+              <img :src=" BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
+            </div>
+  
+            <div class="message-box"
+                 :class="{ 'bg-primary text-white': message.user_id === profile.userProfile?.users_id,
+                  'bg-light': message.user_id !== profile.userProfile?.users_id,
+                   'rounded': true, 'p-3': true, 'message-sent': message.user_id === profile.userProfile?.users_id, 'message-received': message.user_id !== profile.userProfile?.users_id }">
+              <div class="message-username fw-bold"
+                   :class="{ 'text-end': message.user_id === profile.userProfile?.users_id, 'text-start': message.user_id !== profile.userProfile?.users_id }">
+                {{ message.username }}
+              </div>
+              <div class="message-content">
+                {{ message.message }}
+              </div>
+              <div class="message-time small text-muted"
+                   :class="{ 'text-end': message.user_id === profile.userProfile?.users_id, 'text-start': message.user_id !== profile.userProfile?.users_id }">
+                {{ message.sended_at }}
+              </div>
+            </div>
+  
+            <div v-if="message.user_id === profile.userProfile?.users_id" class="profile-image-container rounded-circle overflow-hidden ms-2" style="width: 35px; height: 35px;">
+              <img :src=" BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
+            </div>
+          </div>
+        </div>
+        <div class="chat-input p-3 border-top">
+          <div class="input-group">
+            <input type="text" v-model="newMessage" placeholder="Mesaj yaz..." class="form-control rounded-pill border-0 bg-light"
+                   @keyup.enter="sendMessage">
+            <button class="btn btn-primary rounded-pill" @click="sendMessage">Gönder</button>
+          </div>
+        </div>
+      </div>
     </div>
-
-</template>
+  </template>
 
 <script setup lang="ts">
 import type IResponse from '~/model/interfaces/iresponse';
 import profileStore from '~/store/profile-store';
 import { watch } from "vue"
+import { BASE_URL } from '~/common/API';
 
 interface IMessages {
     username: string,
     chat_message_id: string,
     message: string,
     user_id: number,
-    sended_at: string
+    sended_at: string,
+    photo : string
 }
 
 const profile = profileStore()
@@ -74,10 +93,11 @@ $socket.on("get_chat_messages_result", (response) => {
         const res = response as IResponse
         const gettedMessages = res.value as IMessages[]
 
-        console.log(res)
-
-        messages.value.push(...gettedMessages)
-
+        if(Array.isArray(gettedMessages)){
+          messages.value.push(...gettedMessages)
+        }else{
+          messages.value.push(gettedMessages)
+        }
         nextTick(() => {
             scrollMessages()
         })
@@ -94,6 +114,7 @@ const sendMessage = () => {
 
 $socket.on("send_chat_message_result", (response) => {
     try {
+      console.log(response)
         const res = response as IResponse
         if (res.status == 200) {
             newMessage.value = ""
@@ -105,56 +126,19 @@ $socket.on("send_chat_message_result", (response) => {
 </script>
 
 <style scoped>
-.chat-screen {
-    height: 600px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-}
-
 .chat-messages {
-
-    overflow-y: auto;
-    padding: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
+  padding-bottom: 20px; /* Input alanının mesajları kapatmaması için */
 }
 
-.message {
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-radius: 10px;
-    max-width: 70%;
-    word-wrap: break-word;
-    display: flex;
-    flex-direction: column;
+.message-box {
+  max-width: 70%; /* Mesaj kutularının çok genişlemesini engelle */
 }
 
-.message-sent {
-    background-color: #DCF8C6;
-    align-self: flex-end;
+.message-sent .message-box {
+  border-radius: 20px 20px 0px 20px; 
 }
 
-.message-received {
-    background-color: #ECECEC;
-    align-self: flex-start;
-}
-
-.chat-input {
-    display: flex;
-    gap: 10px;
-}
-
-.chat-input input {
-    flex-grow: 1;
-}
-
-.message-time {
-    font-size: 0.75rem;
-    color: gray;
-    text-align: right;
+.message-received .message-box {
+  border-radius: 20px 20px 20px 0px; 
 }
 </style>

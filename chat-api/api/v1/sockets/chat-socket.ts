@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import databasePool from "../../../service/database";
 import ResponseModel from "../model/error-model";
 import errorCodes from "../common/error-codes";
+import { genericProfilePhotoCompleter } from "../common/generic-func";
 
 interface IChat{
   username : string,
@@ -9,6 +10,13 @@ interface IChat{
   users_id : string,
   message : string,
   chat_id : string
+}
+
+interface IChatMembers{
+  chat_message_id : string,
+  user_id : number,
+  chat_id : string,
+  joined_at : string,
 }
 
 interface IuuidResult {
@@ -43,21 +51,11 @@ ORDER BY message.sended_at DESC;`,
         [users_id, users_id]
       ))[0] as IChat[]; 
 
-    
-      query.map(e => {
-        if(e.photo){
-          e.photo = `/storage/${query[0].users_id}/${query[0].photo}`
-        }else{
-          e.photo = `/storage/defaults/default_profile_image.png`
-        }
-      })
-      
-
 
       socket.emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: query,
+        value: genericProfilePhotoCompleter(query),
       } as ResponseModel);
     } catch (e) {
       console.error(e);
@@ -68,6 +66,19 @@ ORDER BY message.sended_at DESC;`,
     try {
       // Want to start a chat with this user.
       const { user_id } = data;
+
+      const checkChat = (await databasePool.query(
+        `select BIN_TO_UUID(chat_id) as chat_id from chat_members where user_id = ? and chat_id in (select chat_id from chat_members where user_id = ?)`,
+        [users_id, user_id]
+      ))[0] as IChatMembers[];
+
+      if (checkChat.length > 0) {
+        socket.emit("create_chat_result", {
+          message: "Chat already exists",
+          status: 400,
+        } as ResponseModel);
+        return;
+      }
 
       const uuidResult = (
         await databasePool.query("SELECT UUID() AS uuid")
@@ -103,17 +114,16 @@ ORDER BY message.sended_at DESC;`,
       const { chat_id } = data;
 
       const databaseQuery = await databasePool.query(
-        `SELECT user.username,message.message,message.user_id, message.sended_at, BIN_TO_UUID(message.chat_message_id) as chat_message_id
+        `SELECT user.username, user.photo, message.message,message.user_id, message.sended_at, BIN_TO_UUID(message.chat_message_id) as chat_message_id
 FROM chat_messages message inner join users user on user.users_id = message.user_id
-WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC
-`,
+WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC`,
         [chat_id]
       );
 
       socket.emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: databaseQuery[0],
+        value: genericProfilePhotoCompleter(databaseQuery[0] as any),
       } as ResponseModel)
 
     } catch (e) {
@@ -135,18 +145,16 @@ WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC
   socket.on("send_chat_message", async(data) => {
     try{
       const { chat_id,message } = data
-      
-      
 
       await databasePool.query(`insert into chat_messages(message, user_id, chat_id) values(?, ?, uuid_to_bin(?))`, [message,users_id,chat_id])
 
-      const query = await databasePool.query(`select user.users_id as user_id,user.username, message.message, message.chat_message_id, message.sended_at, bin_to_uuid(message.chat_id) as chat_id from chat_messages message inner join users user on message.user_id = user.users_id where user_id = ? and bin_to_uuid(chat_id) = ? ORDER BY message.sended_at DESC limit 1`,[users_id, chat_id]);
+      const query = await databasePool.query(`select user.users_id as user_id,user.username, user.photo, message.message, message.chat_message_id, message.sended_at, bin_to_uuid(message.chat_id) as chat_id from chat_messages message inner join users user on message.user_id = user.users_id where user_id = ? and bin_to_uuid(chat_id) = ? ORDER BY message.sended_at DESC limit 1`,[users_id, chat_id]);
       socket.emit("send_chat_message_result", {
         message: errorCodes.SUCCESS,
         status: 200,
       } as ResponseModel)
       
-      io.to(chat_id).emit("get_chat_messages_result",{message: errorCodes.SUCCESS, status : 200, value : query[0] } as ResponseModel)
+      io.to(chat_id).emit("get_chat_messages_result",{message: errorCodes.SUCCESS, status : 200, value : genericProfilePhotoCompleter(query[0] as any) } as ResponseModel)
 
       const lastMessageQuery = await databasePool.query(`SELECT
     user.username,
@@ -187,5 +195,8 @@ ORDER BY
     }
   })
 };
+
+
+
 
 export default chatSocket;

@@ -24,12 +24,24 @@
                 <ul class="list-group w-100" v-else>
                     <li class="list-group-item" v-for="item in objects.friends" :key="item.users_id">
                         <div class="d-flex justify-content-between align-items-center">
-                            <div>
+                            <div class="d-flex align-items-center">
+                                <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
+                                    style="width: 40px; height: 40px; object-fit: cover;" />
                                 {{ item.username }}
                             </div>
-                            <button class="btn btn-danger" @click="setFriendRequest(item, EFriendStatus.REJECT)">
-                                Remove
-                            </button>
+                            <div class="d-flex">
+                                <button class="btn btn-primary mx-1 d-flex align-items-center justify-content-center" @click="createChat(item)"
+                                    :disabled="chat.checkChat(item.users_id) != undefined">
+                                    <span class="material-symbols-outlined">
+                                        chat_add_on
+                                    </span>
+                                </button>
+                                <button class="btn btn-danger d-flex align-items-center justify-content-center" @click="setFriendRequest(item, EFriendStatus.REJECT)">
+                                    <span class="material-symbols-outlined p-0">
+                                        remove
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </li>
                 </ul>
@@ -39,15 +51,19 @@
         <div v-show="showMenu == ShowMenu.add_friend">
 
             <input v-model="search" @input="searchQuery" @focus="objects.showFriendsRequest = false, showResult = true"
-            
-                 name="search"
-                class="form-control" id="search" type="text" aria-placeholder="search" placeholder="Search" />
+                name="search" class="form-control mt-3" id="search" type="text" aria-placeholder="search"
+                placeholder="Search" />
 
-            <div class="mt-2" v-show="objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
+            <div class="mt-3" v-show="objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
                 <h5>Friend requests</h5>
                 <ul class="list-group">
                     <li class="list-group-item" v-for="item in objects.getFriendRequests" :key="item.users_id">
                         <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
+                                    style="width: 40px; height: 40px; object-fit: cover;" />
+                            </div>
+
                             <div>
                                 {{ item.username }}
                             </div>
@@ -68,17 +84,18 @@
                 </ul>
             </div>
 
-
             <div class="mt-2" v-if="objects.searchedFriends.length > 0 && showResult">
                 <h5 class="mt-2">Results</h5>
                 <ul class="list-group">
                     <li class="list-group-item" v-for="item in objects.searchedFriends" :key="item.users_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
+                                <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
+                                    style="width: 40px; height: 40px; object-fit: cover;" />
                                 {{ item.username }}
                             </div>
                             <button class="btn btn-success d-inline-flex" @click="sendFriendRequest(item)"
-                                :disabled="(item.friend_status === FriendStatus.waiting || item.friend_status === FriendStatus.friend)">
+                                :disabled="(item.friend_status === EFriendStatus.WAITING || item.friend_status === EFriendStatus.ACCEPT)">
                                 <span class="material-symbols-outlined pe-2">
                                     person_add
                                 </span>
@@ -100,16 +117,13 @@ import IUser from '~/model/interfaces/iuser';
 import type IResponse from '~/model/interfaces/iresponse';
 import toastStore from '~/store/toast-store';
 import { EFriendStatus } from '~/model/enum/e_friend_status';
+import { chatStore } from '~/store/chat-store';
+import { BASE_URL } from '~/common/API';
+
 
 /* Interfaces  */
 interface friend extends IUser {
     friend_status: string
-}
-
-enum FriendStatus {
-    friend = "friend",
-    waiting = "waiting",
-    not_friends = "not_friends"
 }
 
 enum ShowMenu {
@@ -131,6 +145,7 @@ const objects = reactive<{
     showFriendsRequest: boolean
 
 }>({ searchedFriends: [], friends: [], getFriendRequests: [], showFriendsRequest: true })
+const chat = chatStore()
 
 const validator = yup.object({
     username: yup.string()
@@ -162,13 +177,17 @@ const setFriendRequest = (user: IUser, status_type: EFriendStatus) => {
     $socket.emit('update_friend_request', { sender_id: user.users_id, status: status_type })
 }
 
+const createChat = (user: IUser) => {
+    $socket.emit("create_chat", { "user_id": user.users_id });
+}
+
 
 /* SOCKET LISTENINGS */
 
 $socket.on("search_friend_result", (response) => {
     try {
         const res = response as IResponse
-        console.log(res)
+        console.log(res.value)
         objects.searchedFriends = res.value as friend[]
     } catch (e) {
         console.error(e)
@@ -176,7 +195,6 @@ $socket.on("search_friend_result", (response) => {
 })
 
 $socket.on("get_friends_result", (response) => {
-    console.log(response)
     console.log("get_friends_result tirggered")
     try {
         const res = response as IResponse
@@ -190,11 +208,7 @@ $socket.on("friend_request_result", (response) => {
     try {
         const res = response as IResponse
 
-        if (res.status == 200) {
-            toast.success({ title: res.message, description: "" })
-        } else {
-            toast.error({ title: res.message, description: "" })
-        }
+        toast.sendToastWithResponse(res)
 
     } catch (e) {
         console.error(e)
@@ -205,11 +219,8 @@ $socket.on("friend_request_result", (response) => {
 $socket.on("update_friend_request_result", (response) => {
     try {
         const res = response as IResponse
-        if (res.status == 200) {
-            toast.success({ title: "Accepted", description: "" })
-        } else {
-            toast.error({ title: "Rejected", description: "" })
-        }
+
+        toast.sendToastWithResponse(res)
     } catch (e) {
 
     }
@@ -226,13 +237,21 @@ $socket.on("get_friend_requests_result", (response) => {
 })
 
 $socket.on("friend_request_getted_result", (response) => {
-    try{
+    try {
         const res = response as IResponse
 
-        if(res.status == 200){
-            toast.success({ title: res.message, description: "" })
-        }
-    }catch(e){
+        toast.sendToastWithResponse(res)
+    } catch (e) {
+        console.error(e)
+    }
+})
+
+$socket.on("create_chat_result", (response) => {
+    try {
+        const res = response as IResponse
+
+        toast.sendToastWithResponse(res)
+    } catch (e) {
         console.error(e)
     }
 })
