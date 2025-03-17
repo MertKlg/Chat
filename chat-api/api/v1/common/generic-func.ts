@@ -46,3 +46,23 @@ export const genericProfilePhotoCompleter = (
   });
   return newMap;
 };
+
+
+export const genericStoragePhotoCompleter = (
+  map : any[]
+) => {
+  if(!map) return []
+  const newMap = map.map((e : any) => {
+    const json = JSON.parse(JSON.stringify(e))
+    if(json){
+      const photo = json["chat_image"]
+      if(photo){
+        json["chat_image"] = `/storage/${json["chat_id"]}/${photo}`
+      }
+    }
+    e = json
+    return e
+  })
+
+  return newMap
+}

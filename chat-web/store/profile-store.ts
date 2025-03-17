@@ -1,6 +1,5 @@
 import { API_URL, STORAGE } from "~/common/API"
 import type IResponse from "~/model/interfaces/iresponse"
-import authStore from "./auth-store"
 import genericFetch from "~/common/genericFetch"
 import type IUser from "~/model/interfaces/iuser"
 
@@ -24,8 +23,6 @@ const profileStore = defineStore("profileStore", () => {
                 if(res.value.length > 0){
                     userProfile.value = res.value[0]
                 }
-
-                console.log(userProfile.value)
             }
         }catch(e){
             console.error("Profile store error : ", e)

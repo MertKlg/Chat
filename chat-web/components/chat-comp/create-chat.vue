@@ -6,7 +6,7 @@
 
         <div class="col mt-3">
             <ul class="list-group w-100" >
-                    <li class="list-group-item" v-for="item in objects.friends" :key="item.users_id">
+                    <li class="list-group-item" v-for="item in objects.friends" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center" style="cursor: pointer;">
                             <div>
                                 {{ item.username }}
@@ -45,7 +45,7 @@ $socket.on("get_friends_result", (response) => {
 
 
 const createChat = (user : IUser) => {
-    $socket.emit("create_chat", {"user_id": user.users_id});
+    $socket.emit("create_chat", {"user_id": user.user_id});
 }
 
 

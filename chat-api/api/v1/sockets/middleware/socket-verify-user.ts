@@ -11,7 +11,7 @@ export const socketVerifyUser = async(socket : Socket, next : (err?: ExtendedErr
             return
         }
     
-        const findUser = (await databasePool.query("SELECT users_id,username,email,phone FROM `users` where email = ?", [email]))[0] as IUser[]
+        const findUser = (await databasePool.query("SELECT user_id,username,email,phone FROM `users` where email = ?", [email]))[0] as IUser[]
         if(findUser.length < 0){
             next(new Error("User not found"))
             return

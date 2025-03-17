@@ -9,8 +9,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         const isAuthenticated = profileSt.userProfile;
         const isAuthRoute = to.path === "/sign-in" || to.path === "/sign-up";
 
-        console.log(isAuthenticated, isAuthRoute)
-
         if (!isAuthenticated && !isAuthRoute) {
           return navigateTo("/sign-in");
         }

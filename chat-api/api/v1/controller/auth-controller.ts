@@ -87,21 +87,21 @@ export const signIn = genericFunc(async (req,res,next) => {
   
 
 export const resetPasssword = genericFunc(async (req,res,next) => {
-    const { users_id } = res.locals.user
+    const { user_id } = res.locals.user
     const {password} = req.body
 
     const hashNewPass = await bcrypt.hash(password, parseInt(`${process.env.SALT_ROUND}`))
 
-    await databasePool.query("UPDATE `users` SET `password`= ? where user_id = ?",[hashNewPass, users_id])
+    await databasePool.query("UPDATE `users` SET `password`= ? where user_id = ?",[hashNewPass, user_id])
     res.json(new ResponseModel(errorCodes.PASSWORD_UPDATED, 200))
 })
 
 export const refreshToken = genericFunc(async (req,res,next) => {
     const { audience,device,browser  } = res.locals
-    const {users_id} = res.locals.user
+    const {user_id} = res.locals.user
 
    
-    const query = await databasePool.query("SELECT `users_id`,`email` FROM `users` WHERE users_id = ?",[users_id])
+    const query = await databasePool.query("SELECT `user_id`,`email` FROM `users` WHERE user_id = ?",[user_id])
     const user = query[0] as IUser[]
 
     if(user.length < 0)

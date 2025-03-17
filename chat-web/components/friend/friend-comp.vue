@@ -22,7 +22,7 @@
                     <p>No friends founded</p>
                 </div>
                 <ul class="list-group w-100" v-else>
-                    <li class="list-group-item" v-for="item in objects.friends" :key="item.users_id">
+                    <li class="list-group-item" v-for="item in objects.friends" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
                                 <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
@@ -31,7 +31,7 @@
                             </div>
                             <div class="d-flex">
                                 <button class="btn btn-primary mx-1 d-flex align-items-center justify-content-center" @click="createChat(item)"
-                                    :disabled="chat.checkChat(item.users_id) != undefined">
+                                    :disabled="chat.checkChat(item.user_id) != undefined">
                                     <span class="material-symbols-outlined">
                                         chat_add_on
                                     </span>
@@ -51,13 +51,14 @@
         <div v-show="showMenu == ShowMenu.add_friend">
 
             <input v-model="search" @input="searchQuery" @focus="objects.showFriendsRequest = false, showResult = true"
+            @blur="objects.showFriendsRequest = true, showResult = false"
                 name="search" class="form-control mt-3" id="search" type="text" aria-placeholder="search"
                 placeholder="Search" />
 
-            <div class="mt-3" v-show="objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
+            <div class="mt-3" v-show="objects.getFriendRequests && objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
                 <h5>Friend requests</h5>
                 <ul class="list-group">
-                    <li class="list-group-item" v-for="item in objects.getFriendRequests" :key="item.users_id">
+                    <li class="list-group-item" v-for="item in objects.getFriendRequests" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
@@ -84,10 +85,10 @@
                 </ul>
             </div>
 
-            <div class="mt-2" v-if="objects.searchedFriends.length > 0 && showResult">
+            <div class="mt-2" v-if="objects.searchedFriends && objects.searchedFriends.length > 0 && showResult">
                 <h5 class="mt-2">Results</h5>
                 <ul class="list-group">
-                    <li class="list-group-item" v-for="item in objects.searchedFriends" :key="item.users_id">
+                    <li class="list-group-item" v-for="item in objects.searchedFriends" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
@@ -166,25 +167,26 @@ watch(search, (newValue) => {
 
 /* ACTIONS  */
 const searchQuery = () => {
-    $socket.emit("search_friend", { username: search.value.trim() })
+    $socket.emit("search_user", { username: search.value.trim() })
+    console.log("search working !")
 }
 
 const sendFriendRequest = (user: IUser) => {
-    $socket.emit("friend_request", { receiver_id: user.users_id })
+    $socket.emit("friend_request", { receiver_id: user.user_id })
 }
 
 const setFriendRequest = (user: IUser, status_type: EFriendStatus) => {
-    $socket.emit('update_friend_request', { sender_id: user.users_id, status: status_type })
+    $socket.emit('update_friend_request', { sender_id: user.user_id, status: status_type })
 }
 
 const createChat = (user: IUser) => {
-    $socket.emit("create_chat", { "user_id": user.users_id });
+    $socket.emit("create_chat", { "user_id": user.user_id });
 }
 
 
 /* SOCKET LISTENINGS */
 
-$socket.on("search_friend_result", (response) => {
+$socket.on("search_user_result", (response) => {
     try {
         const res = response as IResponse
         console.log(res.value)
@@ -195,7 +197,6 @@ $socket.on("search_friend_result", (response) => {
 })
 
 $socket.on("get_friends_result", (response) => {
-    console.log("get_friends_result tirggered")
     try {
         const res = response as IResponse
         objects.friends.push(...res.value)

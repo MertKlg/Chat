@@ -68,11 +68,12 @@ const profile = profileStore()
 const chat = chatStore()
 const emit = defineEmits(["compChanged"])
 
-chat.getChats()
-
 const changeComp = (component: any, props: {} = {}) => {
   emit("compChanged", component, props)
 }
+
+
+chat.getChats()
 
 </script>
 

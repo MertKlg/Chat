@@ -10,7 +10,7 @@ export const verifyUser = genericFunc(async (req,res,next) => {
     if(!email)
         throw new ResponseModel(errorCodes.EMAIL_NOT_VALIDATED, 400)
 
-    const user = await databasePool.query("SELECT `users_id`,`email`,`phone`,`username` FROM users WHERE email = ?", [email])
+    const user = await databasePool.query("SELECT `user_id`,`email`,`phone`,`username` FROM users WHERE email = ?", [email])
     
     if(user.length < 0)
         throw new ResponseModel(errorCodes.USER_NOT_FOUND, 400)
@@ -18,7 +18,7 @@ export const verifyUser = genericFunc(async (req,res,next) => {
     const convertType = user[0] as IUser[]
   
     res.locals.user = {
-        users_id : convertType[0].users_id
+        user_id : convertType[0].user_id
     }
 
 

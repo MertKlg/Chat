@@ -19,7 +19,7 @@ const appSocket = (io : Server) => {
         chatSocket(socket, io)
 
         socket.on('disconnect', () => {
-
+          onlineUserPool.removeUser(users_id)
         });
       });
 }

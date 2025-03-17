@@ -5,26 +5,23 @@ import IFriend from "../../model/interface/ifriend";
 import errorCodes from "../../common/error-codes";
 import onlineUserPool from "../pool/online-user-pool";
 import { genericProfilePhotoCompleter } from "../../common/generic-func";
+import { getFriendRequests, getFriends, checkFriendRequest, sendFriendRequest, searchUser, updateFriendRequest } from "../helpers/friends-query-helper";
 
 const friendSocket = (socket: Socket, io: Server) => {
-  const { users_id, username } = socket.data.user;
+  const { user_id, username } = socket.data.user;
 
   socket.on("get_friends", async (data) => {
     try {
-      const request = (
-        await databasePool.query(
-          "SELECT u.users_id, u.username, u.photo, u.email FROM friends f LEFT JOIN users u ON (u.users_id = CASE WHEN f.sender_id = ? THEN f.receiver_id ELSE f.sender_id END)WHERE f.status = 'Accepted'  AND (f.sender_id = ? OR f.receiver_id = ?);",
-          [users_id, users_id, users_id]
-        )
-      )[0] as IFriend[];
+
+      const userFriends = await getFriends(user_id)
 
       socket.emit("get_friends_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(request as any),
+        value: genericProfilePhotoCompleter(userFriends as any),
       } as ResponseModel);
+
     } catch (e) {
-      console.error(e);
       if (e instanceof Error) {
         socket.emit("get_friends_result", {
           message: e.message,
@@ -41,15 +38,13 @@ const friendSocket = (socket: Socket, io: Server) => {
 
   socket.on("get_friend_requests", async () => {
     try {
-      const result = await databasePool.query(
-        "select u.users_id, u.username, u.email from users u inner join friends f on f.sender_id = u.users_id where f.receiver_id = ? and f.status = ?",
-        [users_id, "waiting"]
-      );
+      
+      const friendsRequests = await getFriendRequests(user_id)
 
       socket.emit("get_friend_requests_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: result[0],
+        value: genericProfilePhotoCompleter(friendsRequests),
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
@@ -70,12 +65,7 @@ const friendSocket = (socket: Socket, io: Server) => {
     try {
       const { receiver_id } = data;
 
-      const checkAlreadyRequestSended = (
-        await databasePool.query(
-          "SELECT sender_id, receiver_id, status FROM friends where sender_id = ? and receiver_id = ?",
-          [users_id, receiver_id]
-        )
-      )[0] as IFriend[];
+      const checkAlreadyRequestSended = await checkFriendRequest(user_id, receiver_id)
 
       if (checkAlreadyRequestSended.length > 0) {
         socket.emit("friend_request_result", {
@@ -85,10 +75,7 @@ const friendSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-      await databasePool.query(
-        "insert into friends (sender_id, receiver_id) values (?,?)",
-        [users_id, receiver_id]
-      );
+      await sendFriendRequest(user_id, receiver_id)
 
       const onlineUser = onlineUserPool.getUserSocketId(receiver_id);
       if (onlineUser)
@@ -119,7 +106,7 @@ const friendSocket = (socket: Socket, io: Server) => {
     }
   });
 
-  socket.on("search_friend", async (data) => {
+  socket.on("search_user", async (data) => {
     try {
       const { username } = data;
 
@@ -131,50 +118,24 @@ const friendSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-      const query = `
-  SELECT DISTINCT
-    u.users_id,
-    u.username,
-    u.email,
-    u.photo,
-    CASE
-      WHEN f.status = 'ACCEPTED' THEN 'ACCEPTED'
-      WHEN f.status = 'WAITING' THEN 'WAITING'
-      ELSE 'not_friends'
-    END AS friend_status
-  FROM users u
-  LEFT JOIN friends f 
-    ON (
-         (u.users_id = f.sender_id AND f.receiver_id = ?)
-         OR
-         (u.users_id = f.receiver_id AND f.sender_id = ?)
-       )
-       AND f.status IN ('ACCEPTED', 'WAITING')
-  WHERE LOWER(u.username) LIKE LOWER(?)
-    AND u.users_id != ?;
-`;
 
-      const result = await databasePool.query(query, [
-        users_id,
-        users_id,
-        `%${username}%`,
-        users_id,
-      ]);
+      const result  = await searchUser(user_id, username)
+      console.log("result " + result)
 
-      socket.emit("search_friend_result", {
+      socket.emit("search_user_result", {
         message: "Success",
         status: 200,
-        value: genericProfilePhotoCompleter(result[0] as any),
+        value: genericProfilePhotoCompleter(result),
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
-        socket.emit("search_friend_result", {
+        socket.emit("search_user_result", {
           message: e.message,
           status: 500,
         } as ResponseModel);
         return;
       }
-      socket.emit("search_friend_result", {
+      socket.emit("search_user_result", {
         message: "Something went wrong",
         status: 500,
       } as ResponseModel);
@@ -185,11 +146,8 @@ const friendSocket = (socket: Socket, io: Server) => {
     try {
       const { sender_id, status } = data;
 
-      await databasePool.query(
-        "update friends f set f.status = ? where receiver_id = ? and sender_id = ?",
-        [status, users_id, sender_id]
-      );
-
+      await updateFriendRequest(user_id, sender_id, status)
+      
       socket.emit("update_friend_request_result", {
         message: "Success",
         status: 200,
