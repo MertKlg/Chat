@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                 );
               }, listener: (context, state) {
                 if (state is AuthSuccess) {
-                  Navigator.pushNamed(context, '/chat');
+                  Navigator.pushNamed(context, '/home');
                 } else if (state is AuthFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

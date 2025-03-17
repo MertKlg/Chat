@@ -21,38 +21,41 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordController1 = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  //final _formKey = GlobalKey<FormState>();
+  final _formkey = GlobalKey<FormState>();
   bool isPasswordVisible = false;
   bool isPasswordVisible1 = false;
 
-  // String? _validateConfirmPassword(String? value) {
-  //   if (value != _passwordController.text) {
-  //     return 'Parolalar eşleşmiyor.';
-  //   }
-  //   return null;
-  // }
+  String? _validateConfirmPassword(String? value) {
+    if (value != _passwordController.text) {
+      return 'Parolalar eşleşmiyor.';
+    }
+    if (value == null || value.isEmpty) {
+      return 'Parola boş bırakılamaz.';
+    }
+    return null;
+  }
 
-  // String? _validatePassword(String? value) {
-  //   if (value == null || value.isEmpty) {
-  //     return 'Parola boş bırakılamaz.';
-  //   }
-  //   if (value.length < 9) {
-  //     return 'Parola en az 9 karakter ve en az 1 tane rakam büyük küçük harf ve özel karakter içermelidir.';
-  //   }
-  //   if (!RegExp(r'[A-Z]').hasMatch(value)) {
-  //     return 'Parola en az bir büyük harf içermelidir.';
-  //   }
-  //   if (!RegExp(r'[a-z]').hasMatch(value)) {
-  //     return 'Parola en az bir küçük harf içermelidir.';
-  //   }
-  //   if (!RegExp(r'\d').hasMatch(value)) {
-  //     return 'Parola en az bir rakam içermelidir.';
-  //   }
-  //   if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
-  //     return 'Parola en az bir özel karakter içermelidir.';
-  //   }
-  //   return null;
-  // }
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Parola boş bırakılamaz.';
+    }
+    if (value.length < 9) {
+      return 'Parola en az 9 karakter ve en az 1 tane rakam büyük küçük harf ve özel karakter içermelidir.';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Parola en az bir büyük harf içermelidir.';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return 'Parola en az bir küçük harf içermelidir.';
+    }
+    if (!RegExp(r'\d').hasMatch(value)) {
+      return 'Parola en az bir rakam içermelidir.';
+    }
+    if (!RegExp(r'[!@#\$&*~]').hasMatch(value)) {
+      return 'Parola en az bir özel karakter içermelidir.';
+    }
+    return null;
+  }
 
   void togglePasswordVisibility() {
     setState(() {
@@ -67,14 +70,22 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _onRegister() {
-    BlocProvider.of<AuthBloc>(context).add(
-      RegisterEvent(
-          username: _usernameController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-          password1: _passwordController1.text,
-          phone: _phoneController.text),
-    );
+    print('faild');
+    if (_formkey.currentState?.validate() == true) {
+      print('validet');
+      BlocProvider.of<AuthBloc>(context).add(
+        RegisterEvent(
+            username: _usernameController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
+            password1: _passwordController1.text,
+            phone: _phoneController.text),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lütfen tüm alanları doğru doldurun.')),
+      );
+    }
   }
 
   @override
@@ -93,89 +104,107 @@ class _RegisterPageState extends State<RegisterPage> {
       body: Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AuthInputField(
-                hint: 'username',
-                controller: _usernameController,
-                icon: Icons.person,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              AuthInputField(
-                hint: 'Email',
-                controller: _emailController,
-                icon: Icons.email,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              AuthInputField(
-                hint: 'Phone',
-                controller: _phoneController,
-                icon: Icons.phone,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              AuthPasswordInput(
-                controller: _passwordController,
-                icon: Icons.lock,
-                isPasswordVisible: isPasswordVisible,
-                hint: 'Password',
-                togglePasswordVisibility: togglePasswordVisibility,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              AuthPasswordInput(
-                controller: _passwordController1,
-                icon: Icons.lock,
-                isPasswordVisible: isPasswordVisible1,
-                hint: 'Password',
-                togglePasswordVisibility: togglePasswordVisibility1,
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              BlocConsumer<AuthBloc, AuthSatate>(
-                builder: (context, state) {
-                  if (state is AuthLoading) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  return AuthButton(onPressed: _onRegister, text: 'Register');
-                },
-                listener: (context, state) {
-                  if (state is AuthSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                      ),
-                    );
+          child: Form(
+            key: _formkey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AuthInputField(
+                  hint: 'username',
+                  controller: _usernameController,
+                  icon: Icons.person,
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                AuthInputField(
+                  hint: 'Email',
+                  controller: _emailController,
+                  icon: Icons.email,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'E-posta adresi zorunludur';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Geçerli bir e-posta adresi girin';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                AuthInputField(
+                  hint: 'Phone',
+                  controller: _phoneController,
+                  icon: Icons.phone,
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                AuthPasswordInput(
+                  controller: _passwordController,
+                  icon: Icons.lock,
+                  isPasswordVisible: isPasswordVisible,
+                  hint: 'Password',
+                  togglePasswordVisibility: togglePasswordVisibility,
+                  validator: _validatePassword,
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                AuthPasswordInput(
+                  controller: _passwordController1,
+                  icon: Icons.lock,
+                  isPasswordVisible: isPasswordVisible1,
+                  hint: 'Password',
+                  togglePasswordVisibility: togglePasswordVisibility1,
+                  validator: _validateConfirmPassword,
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                BlocConsumer<AuthBloc, AuthSatate>(
+                  builder: (context, state) {
+                    if (state is AuthLoading) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    return AuthButton(onPressed: _onRegister, text: 'Register');
+                  },
+                  listener: (context, state) {
+                    if (state is AuthSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      Navigator.pushReplacementNamed(context, '/login');
+                    } else if (state is AuthFailure) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.error),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                AuthPromt(
+                  onTap: () {
                     Navigator.pushNamed(context, '/login');
-                  } else if (state is AuthFailure) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.error),
-                      ),
-                    );
-                  }
-                },
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              AuthPromt(
-                onTap: () {},
-                text: 'Already have an account?',
-                clickableText: 'Click here to login',
-              )
-            ],
+                  },
+                  text: 'Already have an account?',
+                  clickableText: 'Click here to login',
+                )
+              ],
+            ),
           ),
         ),
       ),

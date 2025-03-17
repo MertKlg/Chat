@@ -7,6 +7,8 @@
 
 import 'package:chat_android/features/auth/data/datasource/auth_remote_data_source.dart';
 import 'package:chat_android/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:chat_android/features/friend/data/datasource/friend_remote_socket_datasource.dart';
+import 'package:chat_android/features/friend/data/repositories/friend_repository_imp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,7 +19,12 @@ void main() {
     // Build our app and trigger a frame.
     final authRepository =
         AuthRepositoryImpl(authRemoteDataSource: AuthRemoteDataSource());
-    await tester.pumpWidget(MyApp(authRepository: authRepository));
+    final friendRepository =
+        FriendRepositoryImp(FriendRemoteSocketDatasource());
+    await tester.pumpWidget(MyApp(
+      authRepository: authRepository,
+      friendRepository: friendRepository,
+    ));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

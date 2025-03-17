@@ -1,28 +1,31 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:io';
+import 'package:chat_android/core/base_response.dart';
+import 'package:chat_android/features/auth/data/models/token_model.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:chat_android/features/auth/data/models/user_model.dart';
 
 class AuthRemoteDataSource {
-  final String baseUrl = 'http://192.168.1.100:8001/api/v1/auth';
+  final String baseUrl = '${dotenv.env['BASE_URL']}/api/v1/auth';
 
-  Future<ResponseModel> login(
+  Future<BaseResponseModel<TokenModel>> login(
       {required String email, required String password}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/sign-in'),
       body: jsonEncode(
         {'email': email, 'password': password},
       ),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'MyApp-Mobile'
+      },
     );
 
-    return ResponseModel.fromJson(
-      jsonDecode(response.body),
-    );
+    return BaseResponseModel.fromJson(
+        jsonDecode(response.body), (data) => TokenModel.fromJson(data));
   }
 
-  Future<ResponseModel> register(
+  Future<BaseResponseModel<TokenModel>> register(
       {required String username,
       required String email,
       required String password,
@@ -42,8 +45,8 @@ class AuthRemoteDataSource {
       headers: {'Content-Type': 'application/json'},
     );
 
-    stderr.writeln(response.body);
     log(response.body);
-    return ResponseModel.fromJson(jsonDecode(response.body));
+    return BaseResponseModel.fromJson(
+        jsonDecode(response.body), (data) => TokenModel.fromJson(data));
   }
 }

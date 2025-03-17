@@ -1,7 +1,8 @@
-import 'package:chat_android/features/auth/domain/entities/user_entity.dart';
+import 'package:chat_android/core/base_response.dart';
+import 'package:chat_android/features/auth/domain/entities/token_entity.dart';
 
 abstract class AuthRepository {
-  Future<ResponseEntitiy> login(String email, String password);
-  Future<ResponseEntitiy> register(String username, String email,
+  Future<BaseResponseModel<TokenEntity>> login(String email, String password);
+  Future<BaseResponseModel<TokenEntity>> register(String username, String email,
       String password, String password1, String phone);
 }

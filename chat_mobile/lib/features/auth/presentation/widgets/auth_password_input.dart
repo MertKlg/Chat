@@ -26,32 +26,31 @@ class AuthPasswordInput extends StatelessWidget {
         borderRadius: BorderRadius.circular(25),
       ),
       padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Form(
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.grey),
-            SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                controller: controller,
-                obscureText: !isPasswordVisible, // Şifreyi gizle/göster
-                decoration: InputDecoration(
-                  hintText: hint,
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: InputBorder.none,
-                ),
-                style: TextStyle(color: Colors.white), // Şifre doğrulaması
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          SizedBox(width: 10),
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              obscureText: !isPasswordVisible, // Şifreyi gizle/göster
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(color: Colors.grey),
+                border: InputBorder.none,
               ),
+              style: TextStyle(color: Colors.white),
+              validator: validator, // Şifre doğrulaması
             ),
-            GestureDetector(
-              onTap: togglePasswordVisibility,
-              child: Icon(
-                isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: Colors.grey,
-              ),
+          ),
+          GestureDetector(
+            onTap: togglePasswordVisibility,
+            child: Icon(
+              isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              color: Colors.grey,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
