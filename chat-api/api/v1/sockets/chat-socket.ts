@@ -42,7 +42,7 @@ const chatSocket = (socket: Socket, io: Server) => {
       socket.emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(getUserChats),
+        value: getUserChats,
       } as ResponseModel);
     } catch (e) {
       console.error(e);
@@ -79,12 +79,11 @@ const chatSocket = (socket: Socket, io: Server) => {
       const { chat_id } = data;
 
       const messages = await getChatMessages(user_id, chat_id);
-      const photoCompleter = genericStoragePhotoCompleter(messages);
 
       socket.emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(photoCompleter),
+        value: messages,
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
@@ -116,18 +115,17 @@ const chatSocket = (socket: Socket, io: Server) => {
       }
 
       const lastMessage = await getLastChatMessage(user_id, chat_id);
-      const photoCompleter = genericStoragePhotoCompleter(lastMessage);
 
       io.to(chat_id).emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(photoCompleter),
+        value: lastMessage,
       } as ResponseModel);
 
       io.to(chat_id).emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(photoCompleter),
+        value: lastMessage,
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
@@ -166,18 +164,17 @@ const chatSocket = (socket: Socket, io: Server) => {
       });
 
       const lastMessage = await getLastChatMessage(user_id, chat_id);
-      const photoCompleter = genericStoragePhotoCompleter(lastMessage);
 
       io.to(chat_id).emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(photoCompleter),
+        value: lastMessage,
       } as ResponseModel);
 
       io.to(chat_id).emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(photoCompleter),
+        value: lastMessage,
       } as ResponseModel);
     } catch (e) {
       console.error(e);

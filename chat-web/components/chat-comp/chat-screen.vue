@@ -118,6 +118,7 @@ const scrollMessages = () => {
 watch(props.chat_id, (newChat, oldChat) => {
   const { chat_id } = newChat
   messages.value = []
+  console.log(chat_id)
   $socket.emit("join_chat_room", { chat_id: chat_id })
   $socket.emit("get_chat_messages", { chat_id: chat_id })
 }, { immediate: true })

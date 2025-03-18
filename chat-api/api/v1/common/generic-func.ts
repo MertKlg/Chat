@@ -32,13 +32,20 @@ export const genericProfilePhotoCompleter = (
   const newMap = map.map((e: any) => {
     const json = JSON.parse(JSON.stringify(e));
     if (json) {
-      const photo = json[searchValue];
+      const photo = json[searchValue]
+      const chat_image = json["chat_image"]
       var newPhoto = "";
+
       if (photo) {
         newPhoto = `/storage/${json["users_id"] ?? json["user_id"]}/${photo}`;
       } else {
         newPhoto = `/storage/defaults/default_profile_image.png`;
       }
+
+      if(chat_image){
+        json["chat_image"] = `/storage/${json["chat_id"]}/${chat_image}`
+      }
+
       json["photo"] = newPhoto;
     }
     e = json;

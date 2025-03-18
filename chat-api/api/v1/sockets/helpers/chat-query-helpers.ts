@@ -26,20 +26,41 @@ interface IuuidResult {
 export const getChats = async (user_id: string) => {
     return (
         await databasePool.query(
-            `select user.username, user.photo, user.user_id, message.message, BIN_TO_UUID(member.chat_id) as chat_id from chat_members member 
-inner join users user on user.user_id = member.user_id 
-LEFT JOIN chat_messages message 
-    ON member.chat_id = message.chat_id 
-    AND message.sended_at = ( 
-        SELECT MAX(m2.sended_at) 
-        FROM chat_messages m2 
-        WHERE m2.chat_id = member.chat_id
-    ) 
-WHERE member.chat_id IN (
-    SELECT chat_id FROM chat_members WHERE user_id = ?
-) 
-AND member.user_id != ?
-ORDER BY message.sended_at DESC;`,
+            `SELECT
+    user.username,
+    user.user_id,
+    message.message,
+    BIN_TO_UUID(member.chat_id) AS chat_id,
+    CASE
+        WHEN user.photo IS NULL THEN '/storage/defaults/default_profile_image.png'
+        ELSE CONCAT('/storage/', user.user_id, '/', user.photo)
+    END AS photo
+FROM
+    chat_members member
+INNER JOIN
+    users user ON user.user_id = member.user_id
+LEFT JOIN
+    chat_messages message ON member.chat_id = message.chat_id
+    AND message.sended_at = (
+        SELECT
+            MAX(m2.sended_at)
+        FROM
+            chat_messages m2
+        WHERE
+            m2.chat_id = member.chat_id
+    )
+WHERE
+    member.chat_id IN (
+        SELECT
+            chat_id
+        FROM
+            chat_members
+        WHERE
+            user_id = ?
+    )
+    AND member.user_id != ?
+ORDER BY
+    message.sended_at DESC;`,
             [user_id, user_id]
         )
     )[0] as IChat[];
@@ -49,30 +70,36 @@ export const getChatMessages = async (user_id : string,chat_id: string) => {
     return (
         await databasePool.query(
             `SELECT
-                user.user_id AS user_id,
-                user.username,
-                user.photo,
-                message.message,
-                BIN_TO_UUID(message.chat_message_id) AS chat_message_id,
-                message.sended_at,
-                BIN_TO_UUID(message.chat_id) AS chat_id,
-                message.chat_image
-            FROM
-                chat_messages message
-            INNER JOIN
-                users user ON message.user_id = user.user_id
-            WHERE
-                BIN_TO_UUID(message.chat_id) = ?
-                AND message.chat_id IN (
-                    SELECT
-                        chat_id
-                    FROM
-                        chat_members
-                    WHERE
-                        user_id = ?
-                )
-            ORDER BY
-                message.sended_at ASC;`,
+    user.user_id AS user_id,
+    user.username,
+    message.message,
+    BIN_TO_UUID(message.chat_message_id) AS chat_message_id,
+    message.sended_at,
+    BIN_TO_UUID(message.chat_id) AS chat_id,
+    CASE
+        WHEN message.chat_image IS NOT NULL THEN CONCAT('/storage/', BIN_TO_UUID(message.chat_id), '/', message.chat_image)
+        ELSE NULL
+    END AS chat_image,
+    CASE
+        WHEN user.photo IS NULL THEN '/storage/defaults/default_profile_image.png'
+        ELSE CONCAT('/storage/', user.user_id, '/', user.photo)
+    END AS photo
+FROM
+    chat_messages message
+INNER JOIN
+    users user ON message.user_id = user.user_id
+WHERE
+    BIN_TO_UUID(message.chat_id) = ?
+    AND message.chat_id IN (
+        SELECT
+            chat_id
+        FROM
+            chat_members
+        WHERE
+            user_id = ?
+    )
+ORDER BY
+    message.sended_at asc;`,
             [chat_id,user_id]
         )
     )[0] as IChatMessage[];
