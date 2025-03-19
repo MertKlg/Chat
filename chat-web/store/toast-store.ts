@@ -28,10 +28,10 @@ const toastStore = defineStore("toastStore", () => {
 
   const add = (payload: ToastPayload, status: TToastStatus) => {
     const toast = createToast(payload, status);
-    toasts.value.push(toast);
+    toasts.value = [...toasts.value, toast]
 
     setTimeout(() => {
-      toasts.value = toasts.value.filter((t) => t.id !== toast.id);
+      remove(toast.id);
     }, deafultTimeout);
   };
 

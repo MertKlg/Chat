@@ -110,12 +110,18 @@ export const getLastChatMessage = async (user_id : string, chat_id: string) => {
         SELECT
                 user.user_id AS user_id,
                 user.username,
-                user.photo,
                 message.message,
                 BIN_TO_UUID(message.chat_message_id) AS chat_message_id,
                 message.sended_at,
                 BIN_TO_UUID(message.chat_id) AS chat_id,
-                message.chat_image
+                CASE
+        WHEN message.chat_image IS NOT NULL THEN CONCAT('/storage/', BIN_TO_UUID(message.chat_id), '/', message.chat_image)
+        ELSE NULL
+    END AS chat_image,
+    CASE
+        WHEN user.photo IS NULL THEN '/storage/defaults/default_profile_image.png'
+        ELSE CONCAT('/storage/', user.user_id, '/', user.photo)
+    END AS photo
             FROM
                 chat_messages message
             INNER JOIN

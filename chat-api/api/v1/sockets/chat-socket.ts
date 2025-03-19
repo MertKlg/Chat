@@ -3,11 +3,6 @@ import databasePool from "../../../service/database";
 import ResponseModel from "../model/error-model";
 import errorCodes from "../common/error-codes";
 import {
-  genericProfilePhotoCompleter,
-  genericStoragePhotoCompleter,
-} from "../common/generic-func";
-import {
-  createFolderAsync,
   writeFileToFolderAsync,
 } from "../../../service/file-service";
 import {
@@ -19,13 +14,7 @@ import {
   sendChatMessage,
 } from "./helpers/chat-query-helpers";
 
-interface IGenericQueries {
-  chat_id: string;
-  users_id: string;
-  message: string;
-  socket: Socket;
-  io: Server;
-}
+
 
 const chatSocket = (socket: Socket, io: Server) => {
   const { user_id } = socket.data.user;
@@ -147,21 +136,15 @@ const chatSocket = (socket: Socket, io: Server) => {
       const { chat_id, images } = data;
       const imgs = images as string[];
 
+
       const fileNames = await writeFileToFolderAsync(chat_id, imgs);
       
-      await new Promise((resolve, reject) => {
-        if (fileNames.length > 0) {
-          fileNames.map(async (e) => {
-            await databasePool.query(
-              "insert into chat_messages(chat_image,message,user_id, chat_id) values(?,?,?, uuid_to_bin(?))",
-              [e, "Image sended", user_id, chat_id]
-            );
-          });
-          resolve(true);
-        } else {
-          reject(false);
-        }
-      });
+      await Promise.all(fileNames.map(async (e) => {
+        await databasePool.query(
+            "insert into chat_messages(chat_image,message,user_id, chat_id) values(?,?,?, uuid_to_bin(?))",
+            [e, "Image", user_id, chat_id]
+        );
+    }));
 
       const lastMessage = await getLastChatMessage(user_id, chat_id);
 
@@ -176,8 +159,20 @@ const chatSocket = (socket: Socket, io: Server) => {
         status: 200,
         value: lastMessage,
       } as ResponseModel);
+
+      socket.emit("send_chat_image_result",{ message : errorCodes.SUCCESS, status : 200} as ResponseModel)
     } catch (e) {
-      console.error(e);
+      if (e instanceof Error) {
+        socket.emit("send_chat_image_result", {
+          message: e.message,
+          status: 500,
+        } as ResponseModel);
+        return;
+      }
+      socket.emit("send_chat_image_result", {
+        message: errorCodes.SOMETHING_WENT_WRONG,
+        status: 500,
+      } as ResponseModel);
     }
   });
 };

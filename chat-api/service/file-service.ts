@@ -37,7 +37,6 @@ export const checkFolderAsync = async (
 
 export const writeFileToFolderAsync  = async (folderName : string, file : any[]) => {
     const folderStatus = await checkFolderAsync(folderName)
-    console.log("folder status  : "+ folderStatus)
     const fileNames : string[] = []
     if(!folderStatus){
         const createFolderStat = await createFolderAsync(folderName)
