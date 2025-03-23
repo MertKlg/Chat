@@ -27,7 +27,7 @@ const toastStore = defineStore("toastStore", () => {
   const toasts: Ref<IToast[]> = ref([]);
 
   const add = (payload: ToastPayload, status: TToastStatus) => {
-    const toast = createToast(payload, status);
+    const toast = markRaw(createToast(payload, status))
     toasts.value = [...toasts.value, toast]
 
     setTimeout(() => {

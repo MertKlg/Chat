@@ -19,6 +19,10 @@ interface IChatMessage{
     chat_image : string
 }
 
+interface ICreateChatResult{
+    chat_id : string
+}
+
 interface IuuidResult {
     uuid: string;
 }
@@ -186,6 +190,6 @@ export const checkChat = async (
 ) => {
     return (await databasePool.query(
         `select BIN_TO_UUID(chat_id) as chat_id from chat_members where user_id = ? and chat_id in (select chat_id from chat_members where user_id = ?)`,
-        [user_id, to_user_id]
-    ))
+        [user_id, to_user_id] 
+    ))[0] as ICreateChatResult[]
 }

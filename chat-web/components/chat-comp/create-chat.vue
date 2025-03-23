@@ -35,6 +35,7 @@ $socket.on("get_friends_result", (response) => {
     try {
         const res = response as IResponse
         if(res.status == 200){
+            console.log(res.value)
             objects.value.friends = res.value as IUser[]
         }
 
@@ -45,7 +46,8 @@ $socket.on("get_friends_result", (response) => {
 
 
 const createChat = (user : IUser) => {
-    $socket.emit("create_chat", {"user_id": user.user_id});
+    console.log("create chat with that user : " + user.user_id)
+    $socket.emit("create_chat", {"to_user_id" : user.user_id});
 }
 
 

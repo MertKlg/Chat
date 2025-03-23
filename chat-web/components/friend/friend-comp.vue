@@ -31,7 +31,7 @@
                             </div>
                             <div class="d-flex">
                                 <button class="btn btn-primary mx-1 d-flex align-items-center justify-content-center" @click="createChat(item)"
-                                    :disabled="chat.checkChat(item.user_id) != undefined">
+                                    :disabled="chat.checkChat(item.user_id) != undefined"> 
                                     <span class="material-symbols-outlined">
                                         chat_add_on
                                     </span>
@@ -180,7 +180,7 @@ const setFriendRequest = (user: IUser, status_type: EFriendStatus) => {
 }
 
 const createChat = (user: IUser) => {
-    $socket.emit("create_chat", { "user_id": user.user_id });
+    $socket.emit("create_chat", { "to_user_id": user.user_id });
 }
 
 

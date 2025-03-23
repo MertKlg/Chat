@@ -55,7 +55,7 @@ export const getFriends = async (
 export const getFriendRequests = async(user_id : number) : Promise<IFriendRequests[]> => {
     try{
       return (await databasePool.query(
-        `select u.user_id, u.username, u.photo, u.email from users u inner join friends f on f.sender_id = u.user_id where f.receiver_id = 6 and f.status = 'waiting'`,
+        `select u.user_id, u.username, u.photo, u.email from users u inner join friends f on f.sender_id = u.user_id where f.receiver_id = ? and f.status = 'waiting'`,
         [user_id , 'waiting']
       ))[0] as IFriendRequests[]
     }catch(e){
@@ -123,7 +123,7 @@ export const updateFriendRequest = async (user_id : number, receiver_id : number
 export const getChatMessages = async (chat_id : string) => {
   return await databasePool.query(
     `SELECT user.username, user.photo, message.message,message.user_id, message.chat_image, message.sended_at, BIN_TO_UUID(message.chat_message_id) as chat_message_id
-FROM chat_messages message inner join users user on user.users_id = message.user_id
+FROM chat_messages message inner join users user on user.user_id = message.user_id
 WHERE chat_id = UUID_TO_BIN(?) order by message.sended_at ASC`,
     [chat_id]
   );

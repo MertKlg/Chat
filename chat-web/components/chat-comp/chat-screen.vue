@@ -31,7 +31,8 @@
             </div>
             <div class="message-content">
               <div v-if="message.chat_image">
-                <img :src="BASE_URL + message.chat_image" class="img-fluid rounded" style="max-height: 150px; object-fit: cover;">
+                <img :src="BASE_URL + message.chat_image" class="img-fluid rounded"
+                  style="max-height: 150px; object-fit: cover;">
               </div>
               {{ message.message }}
             </div>
@@ -52,10 +53,11 @@
       <div v-if="selectedFiles && selectedFiles.length > 0" class="selected-image-preview p-2 border-top">
         <div class="d-flex align-items-center">
           <div class="image-preview me-2" style="width: 60px; height: 60px; position: relative;">
-            <img :src="selectedFiles[0].preview" class="img-fluid rounded" style="width: 100%; height: 100%; object-fit: cover;">
-            <button class="btn btn-sm btn-danger position-absolute" 
-                   style="top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; padding: 0; font-size: 10px;"
-                   @click="removeSelectedImage">×</button>
+            <img :src="selectedFiles[0].preview" class="img-fluid rounded"
+              style="width: 100%; height: 100%; object-fit: cover;">
+            <button class="btn btn-sm btn-danger position-absolute"
+              style="top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; padding: 0; font-size: 10px;"
+              @click="removeSelectedImage">×</button>
           </div>
           <button class="btn btn-sm btn-success" @click="sendImage">Send Image</button>
         </div>
@@ -64,14 +66,17 @@
       <div class="chat-input p-3 border-top">
         <div class="input-group d-flex w-100 align-items-center">
           <!-- Image upload button -->
-          <label for="file-upload" class="btn btn-outline-secondary rounded-circle me-2" style="width: 40px; height: 40px; padding: 8px; display: flex; align-items: center; justify-content: center;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-image" viewBox="0 0 16 16">
-              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-              <path d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z"/>
+          <label for="file-upload" class="btn btn-outline-secondary rounded-circle me-2"
+            style="width: 40px; height: 40px; padding: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-image"
+              viewBox="0 0 16 16">
+              <path d="M6.002 5.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+              <path
+                d="M2.002 1a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-12zm12 1a1 1 0 0 1 1 1v6.5l-3.777-1.947a.5.5 0 0 0-.577.093l-3.71 3.71-2.66-1.772a.5.5 0 0 0-.63.062L1.002 12V3a1 1 0 0 1 1-1h12z" />
             </svg>
           </label>
           <input id="file-upload" type="file" accept=".png,.jpg,.jpeg" @change="onFileChange" style="display: none">
-          
+
           <input type="text" v-model="newMessage" placeholder="Mesaj yaz..."
             class="form-control rounded-pill border-0 bg-light mx-1" @keyup.enter="sendMessage">
           <button class="btn btn-primary rounded-pill" @click="sendMessage">Send</button>
@@ -117,7 +122,12 @@ const scrollMessages = () => {
 
 /* SOCKET */
 watch(() => props.chat_id, (newChat, oldChat) => {
-  if(newChat){
+  if (newChat) {
+    $socket.off("get_chat_messages_result");
+    $socket.off("send_chat_message_result");
+    $socket.off("send_chat_image_result");
+    $socket.off("join_chat_room");
+
     const { chat_id } = newChat
     currentChatId.value = chat_id
     messages.value = []
@@ -138,10 +148,10 @@ const sendImage = async () => {
   try {
     if (isUploading.value) return;
     isUploading.value = true;
-    
+
     // Get chat_id from props or current value
     const chat_id = props.chat_id?.chat_id || currentChatId.value;
-    
+
     if (!chat_id) {
       toast.error({ title: 'Chat not found', description: 'Please try again' });
       isUploading.value = false;
@@ -155,7 +165,9 @@ const sendImage = async () => {
     }
 
     // Convert files to base64 - access the actual File objects
-    const images = await Promise.all(selectedFiles.value.map(item => convertBase64Format(item.file)));
+    const images = selectedFiles.value.map(async (item) => await convertBase64Format(item.file))
+
+    console.log(images)
 
     if (images.length <= 0) {
       toast.error({ title: 'Failed to process image', description: 'Please try again' });
@@ -164,10 +176,10 @@ const sendImage = async () => {
     }
 
     toast.warning({ title: 'Uploading image...', description: 'Please wait' });
-    
+
     // Send to socket
     $socket.emit("send_chat_image", { chat_id, images });
-    
+
   } catch (e) {
     console.error("Error sending image:", e);
     toast.error({ title: 'Failed to send image', description: 'Please try again' });
@@ -180,31 +192,31 @@ const removeSelectedImage = () => {
 }
 
 const onFileChange = (event) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    if (files.length <= 1) {
-        // Use the actual File objects, not processed ones
-        selectedFiles.value = Array.from(files).map(file => {
-            return {
-                file: file, // Store the actual File object
-                preview: URL.createObjectURL(file)
-            };
-        });
-        
-        // Reset the input
-        try {
-            event.target.value = null; 
-        } catch (e) {
-            console.error("event.target.value = null error", e);
-        }
-        
-        toast.success({ title: 'Image selected', description: 'Click "Send Image" to upload' });
-    } else {
-        toast.error({ title: 'Just only select 1 image', description: '' });
-        event.target.value = null;
-        selectedFiles.value = null;
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
+
+  if (files.length <= 1) {
+    // Use the actual File objects, not processed ones
+    selectedFiles.value = Array.from(files).map(file => {
+      return {
+        file: file, // Store the actual File object
+        preview: URL.createObjectURL(file)
+      };
+    });
+
+    // Reset the input
+    try {
+      event.target.value = null;
+    } catch (e) {
+      console.error("event.target.value = null error", e);
     }
+
+    toast.success({ title: 'Image selected', description: 'Click "Send Image" to upload' });
+  } else {
+    toast.error({ title: 'Just only select 1 image', description: '' });
+    event.target.value = null;
+    selectedFiles.value = null;
+  }
 };
 
 const convertBase64Format = (file: File) => {
@@ -214,10 +226,10 @@ const convertBase64Format = (file: File) => {
       reject(new Error("Invalid file object"));
       return;
     }
-    
+
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => resolve(reader.result as string);
     reader.onerror = error => reject(error);
   });
 }
@@ -258,13 +270,21 @@ $socket.on("send_chat_image_result", (response) => {
   try {
     const res = response as IResponse;
     isUploading.value = false;
-    
+
+    console.log(res)
+
     if (res.status == 200) {
       toast.success({ title: 'Image sent successfully', description: '' });
       selectedFiles.value = null;
+
+      nextTick(() => {
+        scrollMessages();
+      });
     } else {
       toast.error({ title: 'Failed to send image', description: res.message || 'Please try again' });
     }
+
+
   } catch (e) {
     isUploading.value = false;
     console.error("Error processing image upload response:", e);

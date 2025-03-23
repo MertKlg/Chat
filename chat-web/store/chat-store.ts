@@ -2,7 +2,7 @@ import type IResponse from "~/model/interfaces/iresponse"
 import type IUser from "~/model/interfaces/iuser"
 
 interface IChat {
-    users_id: number,
+    user_id: number,
     username: string,
     photo: string,
     message: string,
@@ -46,7 +46,7 @@ export const chatStore = defineStore("chatStore", () => {
     const checkChat = (userId : number | undefined) : number | undefined => {
         if(!userId) return
 
-        const findFriend = chats.value.find(e => e.users_id == userId)?.users_id
+        const findFriend = chats.value.find(e => e.user_id == userId)?.user_id
         return findFriend
     }
 

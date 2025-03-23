@@ -47,6 +47,7 @@ export const writeFileToFolderAsync  = async (folderName : string, file : any[])
 
     await Promise.all(
       file.map(async (e) => {
+        console.log(e)
         const generateUUID = uuidv4();
         const base64Data = e.replace(/^data:image\/(jpeg|png|jpg);base64,/, "");
         const buffer = Buffer.from(base64Data, "base64");
