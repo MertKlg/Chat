@@ -13,8 +13,6 @@ import {
   getLastChatMessage,
   sendChatMessage,
 } from "./helpers/chat-query-helpers";
-import { arrayBuffer } from "node:stream/consumers";
-
 
 
 const chatSocket = (socket: Socket, io: Server) => {
@@ -54,7 +52,7 @@ const chatSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-      await createChat(user_id);
+      await createChat(user_id,to_user_id);
 
       socket.emit("create_chat_result", {
         message: errorCodes.SUCCESS,
@@ -136,14 +134,7 @@ const chatSocket = (socket: Socket, io: Server) => {
   socket.on("send_chat_image", async (data) => {
     try {
       const { chat_id, images } = data;
-
-      if(images instanceof Array){
-        console.log("images is array : " , images)
-      }
-      
-      const imgs = images as string[];
-
-
+      const imgs = images as string[]
       const fileNames = await writeFileToFolderAsync(chat_id, imgs);
 
       await Promise.all(fileNames.map(async (e) => {

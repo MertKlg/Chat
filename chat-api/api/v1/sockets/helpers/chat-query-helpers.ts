@@ -161,7 +161,7 @@ export const sendChatMessage = async (
     }
 };
 
-export const createChat = async (user_id: number) => {
+export const createChat = async (user_id: number, to_user_id : number) => {
     const uuidResult = (
         await databasePool.query("SELECT UUID() AS uuid")
     )[0] as IuuidResult[];
@@ -179,7 +179,7 @@ export const createChat = async (user_id: number) => {
 
     await databasePool.query(
         "INSERT INTO chat_members(chat_id, user_id) VALUES(UUID_TO_BIN(?), ?)",
-        [chatId, user_id]
+        [chatId, to_user_id]
     );
 };
 

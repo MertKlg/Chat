@@ -17,7 +17,7 @@
 
           <div v-if="message.user_id !== profile.userProfile?.user_id"
             class="profile-image-container rounded-circle overflow-hidden me-2" style="width: 35px; height: 35px;">
-            <img :src="BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
+            <img :src="config.public.BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
           </div>
 
           <div class="message-box" :class="{
@@ -31,7 +31,7 @@
             </div>
             <div class="message-content">
               <div v-if="message.chat_image">
-                <img :src="BASE_URL + message.chat_image" class="img-fluid rounded"
+                <img :src="config.public.BASE_URL + message.chat_image" class="img-fluid rounded"
                   style="max-height: 150px; object-fit: cover;">
               </div>
               {{ message.message }}
@@ -44,7 +44,7 @@
 
           <div v-if="message.user_id === profile.userProfile?.user_id"
             class="profile-image-container rounded-circle overflow-hidden ms-2" style="width: 35px; height: 35px;">
-            <img :src="BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
+            <img :src="config.public.BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
           </div>
         </div>
       </div>
@@ -90,7 +90,6 @@
 import type IResponse from '~/model/interfaces/iresponse';
 import profileStore from '~/store/profile-store';
 import { watch, ref, defineProps, nextTick } from "vue"
-import { BASE_URL } from '~/common/API';
 import toastStore from '~/store/toast-store';
 
 interface IMessages {
@@ -112,6 +111,7 @@ const toast = toastStore()
 const currentChatId = ref<string | null>(null)
 const selectedFiles = ref<File[] | null>(null)
 const isUploading = ref(false);
+const config = useRuntimeConfig();
 
 /* JS */
 const scrollMessages = () => {
@@ -164,25 +164,43 @@ const sendImage = async () => {
       return;
     }
 
-    // Convert files to base64 - access the actual File objects
-    const images = selectedFiles.value.map(async (item) => await convertBase64Format(item.file))
+    // Convert files to base64 - RESOLVE the promises
+    const imagePromises = selectedFiles.value.map(async (item) => {
+      try {
+        const base64 = await convertBase64Format(item.file);
+        return base64;
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    });
 
-    console.log(images)
+    // Wait for all promises to resolve
+    const images = await Promise.all(imagePromises);
 
-    if (images.length <= 0) {
+    const validImages = images.filter(img => img !== null);
+
+    if (validImages.length <= 0) {
       toast.error({ title: 'Failed to process image', description: 'Please try again' });
       isUploading.value = false;
       return;
     }
 
+    const base64LengthLimit = config.public.FILE_SIZE;
+    const isTooLarge = validImages.some(img => img.length > base64LengthLimit);
+    if (isTooLarge) {
+      toast.error({ title: 'Image too large', description: 'Please select a smaller image.' });
+      return;
+    }
+
     toast.warning({ title: 'Uploading image...', description: 'Please wait' });
 
-    // Send to socket
-    $socket.emit("send_chat_image", { chat_id, images });
-
+    // Send to socket - now with resolved base64 strings
+    $socket.emit("send_chat_image", { chat_id, images: validImages });
   } catch (e) {
     console.error("Error sending image:", e);
     toast.error({ title: 'Failed to send image', description: 'Please try again' });
+  } finally {
     isUploading.value = false;
   }
 }
@@ -196,11 +214,17 @@ const onFileChange = (event) => {
   if (!files || files.length === 0) return;
 
   if (files.length <= 1) {
-    // Use the actual File objects, not processed ones
     selectedFiles.value = Array.from(files).map(file => {
+
+      const sanitizedName = `${file.name}`
+        .toLowerCase()
+        .replace(/[^a-zA-Z0-9.-]/g, '_')
+        .substring(0, 50);
+
       return {
-        file: file, // Store the actual File object
-        preview: URL.createObjectURL(file)
+        file: file,
+        preview: URL.createObjectURL(file),
+        sanitizedName: sanitizedName
       };
     });
 
@@ -229,7 +253,7 @@ const convertBase64Format = (file: File) => {
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
+    reader.onload = () => resolve(reader.result);
     reader.onerror = error => reject(error);
   });
 }
@@ -268,10 +292,11 @@ $socket.on("send_chat_message_result", (response) => {
 
 $socket.on("send_chat_image_result", (response) => {
   try {
+    console.log("Image result : ", response)
     const res = response as IResponse;
     isUploading.value = false;
 
-    console.log(res)
+    console.log(response)
 
     if (res.status == 200) {
       toast.success({ title: 'Image sent successfully', description: '' });

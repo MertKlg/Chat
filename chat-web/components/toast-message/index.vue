@@ -16,6 +16,8 @@
                 <div class="toast-body">
                     <strong class="me-2">{{ item.status == 'error' ? "Error" : item.status == 'success' ? 'Success' : item.status == 'warning' ? 'Warning' : 'Info' }}</strong>
                     <small>{{ item.title }}</small>
+                    <br>
+                    <small>{{ item.description }}</small>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
                     aria-label="Close" @click="store.remove(item.id)"></button>

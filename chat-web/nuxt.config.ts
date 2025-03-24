@@ -29,6 +29,15 @@ export default defineNuxtConfig({
         }
       ]
     }
+  },
+
+  runtimeConfig : {
+    public : {
+      BASE_URL : "http://localhost:8080",
+      API_URL : `http://localhost:8080/api/v1`,
+      STORAGE : `http://localhost:8080/storage/`,
+      FILE_SIZE : (1 * 1024 * 1024 * 4 / 3)
+    }
   }
 
 })

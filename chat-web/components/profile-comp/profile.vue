@@ -14,7 +14,7 @@
                   overflow: hidden;
                   border-radius: 50%;
                 ">
-                                <img :src=" BASE_URL + profileInformation.user.photo" alt="Profile Image"
+                                <img :src=" config.public.BASE_URL + profileInformation.user.photo" alt="Profile Image"
                                     class="w-100 h-100 object-fit-cover" />
                                 <div class="overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center"
                                     style="cursor: pointer" @click="triggerFileInput">
@@ -62,7 +62,6 @@
 
 <script lang="ts" setup>
 import profileStore from "~/store/profile-store";
-import UpdateProfile from "./update-profile.vue";
 import { reactive, watch } from "vue";
 import { clientSideFetch } from "~/common/genericFetch";
 import { API_URL, BASE_URL } from "~/common/API";
@@ -73,6 +72,7 @@ import type IUser from "~/model/interfaces/iuser";
 
 const toast = toastStore();
 const profile = profileStore();
+const config = useRuntimeConfig()
 
 const profileInformation = reactive<{
     user: IUser;

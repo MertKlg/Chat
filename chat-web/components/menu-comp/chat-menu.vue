@@ -17,7 +17,7 @@
 
           <div>
             <div class="d-flex align-items-center">
-              <img :src="BASE_URL + chat.photo" style="
+              <img :src="config.public.BASE_URL + chat.photo" style="
            width: 50px;
            height: 50px;
            overflow: hidden;
@@ -39,7 +39,7 @@
     <div class="p-2 border-top">
       <div class="d-flex align-items-center" @click="changeComp(Profile)" style="cursor: pointer;">
 
-        <img v-if="profile && profile.userProfile && profile.userProfile.photo" :src="BASE_URL + profile.userProfile?.photo" style="
+        <img v-if="profile && profile.userProfile && profile.userProfile.photo" :src="config.public.BASE_URL + profile.userProfile?.photo" style="
           width: 50px;
           height: 50px;
           overflow: hidden;
@@ -66,6 +66,7 @@ import { chatStore } from '~/store/chat-store';
 
 const profile = profileStore()
 const chat = chatStore()
+const config = useRuntimeConfig();
 const emit = defineEmits(["compChanged"])
 
 const changeComp = (component: any, props: {} = {}) => {
