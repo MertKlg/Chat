@@ -1,6 +1,8 @@
 <template>
-  <div class="col-3 d-flex flex-column h-100">
+  <div class="col-3 d-flex flex-column h-100 positon-relative p-0 m-0">
+
     <div class="p-2 border-bottom">
+
       <div class="d-flex justify-content-between">
         <button type="button" class="btn w-100 btn-secondary" @click="changeComp(FriendComp)">
           <span class="material-symbols-outlined py-2">
@@ -8,6 +10,7 @@
           </span>
         </button>
       </div>
+
     </div>
 
     <div class="flex-grow-1 overflow-auto p-2">
@@ -18,11 +21,11 @@
           <div>
             <div class="d-flex align-items-center">
               <img :src="config.public.BASE_URL + chat.photo" style="
-           width: 50px;
-           height: 50px;
-           overflow: hidden;
-           border-radius: 50%;
-           " class="rounded-circle" alt="User profile photo" />
+width: 50px;
+height: 50px;
+overflow: hidden;
+border-radius: 50%;
+" class="rounded-circle" alt="User profile photo" />
               <span class="ms-2 fw-bold">
                 {{ chat.username }}
               </span>
@@ -39,12 +42,13 @@
     <div class="p-2 border-top">
       <div class="d-flex align-items-center" @click="changeComp(Profile)" style="cursor: pointer;">
 
-        <img v-if="profile && profile.userProfile && profile.userProfile.photo" :src="config.public.BASE_URL + profile.userProfile?.photo" style="
-          width: 50px;
-          height: 50px;
-          overflow: hidden;
-          border-radius: 50%;
-        " class="rounded-circle" alt="User profile photo" />
+        <img v-if="profile && profile.userProfile && profile.userProfile.photo"
+          :src="config.public.BASE_URL + profile.userProfile?.photo" style="
+width: 50px;
+height: 50px;
+overflow: hidden;
+border-radius: 50%;
+" class="rounded-circle" alt="User profile photo" />
 
         <div class="ms-2">
           <h6 class="mb-0">{{ profile.userProfile?.username }}</h6>
@@ -52,6 +56,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 

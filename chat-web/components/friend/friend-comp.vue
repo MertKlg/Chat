@@ -25,7 +25,7 @@
                     <li class="list-group-item" v-for="item in objects.friends" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
+                                <img :src="config.public.BASE_URL + item.photo" class="rounded-circle me-2"
                                     style="width: 40px; height: 40px; object-fit: cover;" />
                                 {{ item.username }}
                             </div>
@@ -55,13 +55,13 @@
                 name="search" class="form-control mt-3" id="search" type="text" aria-placeholder="search"
                 placeholder="Search" />
 
-            <div class="mt-3" v-show="objects.getFriendRequests && objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
+            <div class="mt-3">
                 <h5>Friend requests</h5>
-                <ul class="list-group">
+                <ul class="list-group" v-if="objects.getFriendRequests && objects.getFriendRequests.length > 0 && objects.showFriendsRequest">
                     <li class="list-group-item" v-for="item in objects.getFriendRequests" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
+                                <img :src=" config.public.BASE_URL + item.photo" class="rounded-circle me-2"
                                     style="width: 40px; height: 40px; object-fit: cover;" />
                             </div>
 
@@ -83,6 +83,10 @@
                         </div>
                     </li>
                 </ul>
+
+                <div v-else>
+                    <p>No founded friend requests</p>
+                </div>
             </div>
 
             <div class="mt-2" v-if="objects.searchedFriends && objects.searchedFriends.length > 0 && showResult">
@@ -91,7 +95,7 @@
                     <li class="list-group-item" v-for="item in objects.searchedFriends" :key="item.user_id">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <img :src="BASE_URL + item.photo" class="rounded-circle me-2"
+                                <img :src="config.public.BASE_URL + item.photo" class="rounded-circle me-2"
                                     style="width: 40px; height: 40px; object-fit: cover;" />
                                 {{ item.username }}
                             </div>
@@ -112,7 +116,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
-import { Form, Field, ErrorMessage } from "vee-validate"
+import { Form, Field, ErrorMessage, configure } from "vee-validate"
 import * as yup from "yup"
 import IUser from '~/model/interfaces/iuser';
 import type IResponse from '~/model/interfaces/iresponse';
@@ -120,7 +124,6 @@ import toastStore from '~/store/toast-store';
 import { EFriendStatus } from '~/model/enum/e_friend_status';
 import { chatStore } from '~/store/chat-store';
 import { BASE_URL } from '~/common/API';
-
 
 /* Interfaces  */
 interface friend extends IUser {
@@ -133,12 +136,12 @@ enum ShowMenu {
 }
 
 /* Varaibles and injects  */
-
 const { $socket } = useNuxtApp()
 const search = ref<string>("")
 const showResult = ref<boolean>(false)
 const toast = toastStore()
 const showMenu = ref<string>(ShowMenu.friends)
+const config = useRuntimeConfig()
 const objects = reactive<{
     searchedFriends: friend[],
     friends: friend[],
@@ -168,7 +171,6 @@ watch(search, (newValue) => {
 /* ACTIONS  */
 const searchQuery = () => {
     $socket.emit("search_user", { username: search.value.trim() })
-    console.log("search working !")
 }
 
 const sendFriendRequest = (user: IUser) => {
@@ -189,7 +191,6 @@ const createChat = (user: IUser) => {
 $socket.on("search_user_result", (response) => {
     try {
         const res = response as IResponse
-        console.log(res.value)
         objects.searchedFriends = res.value as friend[]
     } catch (e) {
         console.error(e)

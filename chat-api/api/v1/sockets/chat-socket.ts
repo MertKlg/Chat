@@ -2,9 +2,7 @@ import { Server, Socket } from "socket.io";
 import databasePool from "../../../service/database";
 import ResponseModel from "../model/error-model";
 import errorCodes from "../common/error-codes";
-import {
-  writeFileToFolderAsync,
-} from "../../../service/file-service";
+import { writeFileToFolderAsync } from "../../../service/file-service";
 import {
   checkChat,
   createChat,
@@ -13,7 +11,6 @@ import {
   getLastChatMessage,
   sendChatMessage,
 } from "./helpers/chat-query-helpers";
-
 
 const chatSocket = (socket: Socket, io: Server) => {
   const { user_id } = socket.data.user;
@@ -33,7 +30,18 @@ const chatSocket = (socket: Socket, io: Server) => {
         value: getUserChats,
       } as ResponseModel);
     } catch (e) {
-      console.error(e);
+      if (e instanceof Error) {
+        socket.emit("get_chats_result", {
+          message: e.message,
+          status: 500,
+        } as ResponseModel);
+        return;
+      }
+
+      socket.emit("get_chats_result", {
+        message: errorCodes.SOMETHING_WENT_WRONG,
+        status: 500,
+      } as ResponseModel);
     }
   });
 
@@ -52,14 +60,24 @@ const chatSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-      await createChat(user_id,to_user_id);
+      await createChat(user_id, to_user_id);
 
       socket.emit("create_chat_result", {
         message: errorCodes.SUCCESS,
         status: 200,
       } as ResponseModel);
     } catch (e) {
-      console.error(e);
+      if (e instanceof Error) {
+        socket.emit("create_chat_result", {
+          message: e.message,
+          status: 500,
+        } as ResponseModel);
+      }
+      socket.emit("create_chat_result", {
+        message: "Something went wrong",
+        status: 500,
+      } as ResponseModel);
+      
     }
   });
 
@@ -134,15 +152,17 @@ const chatSocket = (socket: Socket, io: Server) => {
   socket.on("send_chat_image", async (data) => {
     try {
       const { chat_id, images } = data;
-      const imgs = images as string[]
+      const imgs = images as string[];
       const fileNames = await writeFileToFolderAsync(chat_id, imgs);
 
-      await Promise.all(fileNames.map(async (e) => {
-        await databasePool.query(
-          "insert into chat_messages(chat_image,message,user_id, chat_id) values(?,?,?, uuid_to_bin(?))",
-          [e, "Image", user_id, chat_id]
-        );
-      }));
+      await Promise.all(
+        fileNames.map(async (e) => {
+          await databasePool.query(
+            "insert into chat_messages(chat_image,message,user_id, chat_id) values(?,?,?, uuid_to_bin(?))",
+            [e, "Image", user_id, chat_id]
+          );
+        })
+      );
 
       const lastMessage = await getLastChatMessage(user_id, chat_id);
 
@@ -158,8 +178,10 @@ const chatSocket = (socket: Socket, io: Server) => {
         value: lastMessage,
       } as ResponseModel);
 
-      socket.emit("send_chat_image_result", { message: errorCodes.SUCCESS, status: 200 } as ResponseModel)
-
+      socket.emit("send_chat_image_result", {
+        message: errorCodes.SUCCESS,
+        status: 200,
+      } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
         socket.emit("send_chat_image_result", {

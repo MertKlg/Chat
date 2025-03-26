@@ -5,10 +5,10 @@ class ResponseModel implements IResponse{
     status: number
     value: any[]
     
-    constructor(){
-        this.message = ""
-        this.status = 0
-        this.value = []
+    constructor(message : string = "", status : number = 500, value : any[] = []){
+        this.message = message
+        this.status = status
+        this.value = value
     }
 }
 

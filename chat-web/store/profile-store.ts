@@ -1,7 +1,8 @@
 import { API_URL, STORAGE } from "~/common/API"
 import type IResponse from "~/model/interfaces/iresponse"
-import genericFetch from "~/common/genericFetch"
+import genericFetch, { clientSideFetch } from "~/common/genericFetch"
 import type IUser from "~/model/interfaces/iuser"
+import ResponseModel from "~/model/response-model"
 
 const profileStore = defineStore("profileStore", () => {
 
@@ -20,16 +21,37 @@ const profileStore = defineStore("profileStore", () => {
             )
     
             if(res.status === 200){
-                if(res.value.length > 0){
-                    userProfile.value = res.value[0]
-                }
+                userProfile.value = res.value[0]
             }
         }catch(e){
             console.error("Profile store error : ", e)
         }
     }
 
-    return { userProfile, getProfile }
+    const deleteProfile = async () : Promise<ResponseModel>  => {
+        try{            
+            const res = await clientSideFetch(
+                {
+                  url:  `${API_URL}/profile/delete`,
+                  method : 'DELETE',
+                  body : undefined,
+                  credentials : "include",
+                  immediate : false
+                }
+            ) as ResponseModel
+
+            return res
+        }catch(e){
+            if(e instanceof ResponseModel){
+                return e
+            }else if(e instanceof Error){
+                return new ResponseModel(e.message ?? "Something went wrong", 500)
+            }
+            return new ResponseModel("Something went wrong", 500)
+        }
+    }
+
+    return { userProfile, getProfile, deleteProfile }
 
 })
 

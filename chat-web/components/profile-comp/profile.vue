@@ -49,7 +49,7 @@
                             <button class="btn btn-success mx-1" @click="updateProfile">
                                 Update profile
                             </button>
-                            <button class="btn btn-danger mx-1" disabled>
+                            <button class="btn btn-danger mx-1" @click="deleteProfile">
                                 Delete profile
                             </button>
                         </div>
@@ -167,6 +167,13 @@ const onFileChange = (event) => {
         reader.readAsDataURL(file);
     }
 };
+
+const deleteProfile = async () => {
+    if(confirm("Your account will be deleted. Are you sure?")){
+        const res = await profile.deleteProfile()
+        toast.sendToastWithResponse(res)
+    }
+}
 </script>
 
 <style scoped>

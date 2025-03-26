@@ -6,6 +6,7 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import databasePool from "../../../service/database";
 import { DeviceTypes } from "../model/types/device-types";
+import ProfileStatus from "../model/types/profile-status";
 
 export const signUp = genericFunc(async(req,res,next) => {
     const {username,email,password,phone} = req.body
@@ -37,11 +38,14 @@ export const signIn = genericFunc(async (req,res,next) => {
         throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500);
     }
 
-    const findUser = await databasePool.query(`select users.email, users.password from users where email = ?`,[email])
-    const user = findUser[0] as IUser[]
+    const user = (await databasePool.query(`select users.email, users.password from users where email = ?`,[email]))[0] as IUser[]
     
     if(user.length <= 0)
         throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
+
+    if(user[0].is_active == ProfileStatus.DEACTIVE){
+        throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
+    }
 
 
     const checkPassword = await bcrypt.compare(password, user[0].password)

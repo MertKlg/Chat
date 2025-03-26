@@ -118,9 +118,7 @@ const friendSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-
       const result  = await searchUser(user_id, username)
-      console.log("result " + result)
 
       socket.emit("search_user_result", {
         message: "Success",
