@@ -1,5 +1,6 @@
 import { QueryResult } from "mysql2";
 import databasePool from "../../../../service/database";
+import IUser from "../../model/interface/iuser";
 interface IChat {
     username: string;
     photo: string;
@@ -103,7 +104,7 @@ WHERE
             user_id = ?
     )
 ORDER BY
-    message.sended_at asc;`,
+    message.sended_at asc`,
             [chat_id,user_id]
         )
     )[0] as IChatMessage[];
@@ -193,3 +194,24 @@ export const checkChat = async (
         [user_id, to_user_id] 
     ))[0] as ICreateChatResult[]
 }
+
+
+export const getChatMembers = async(chat_id : string) : Promise<IUser[]> => {
+    if(!chat_id) return [] as IUser[]
+
+    return (await databasePool.query(`SELECT user_id FROM chat_members where chat_id = uuid_to_bin(?)`, [chat_id]))[0] as IUser[]
+}
+
+export const deleteChatMessage = async (chat_id : string, chat_message_id : string) => {
+    if(!chat_id || !chat_message_id) return
+
+    await databasePool.query(`delete from chat_messages where chat_id = uuid_to_bin(?) and chat_message_id = uuid_to_bin(?)`, [chat_id, chat_message_id])
+}
+
+export const editChatMessage = async (chat_id : string, chat_message_id : string, message : string) => {
+    if(!chat_id || !chat_message_id) return
+
+    await databasePool.query(`update chat_messages set message = ? where chat_id = uuid_to_bin(?) and chat_message_id = uuid_to_bin(?)`, [message, chat_id, chat_message_id])
+}
+
+

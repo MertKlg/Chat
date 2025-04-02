@@ -51,6 +51,7 @@ export const chatStore = defineStore("chatStore", () => {
     }
 
     const emitChat = () => {
+        $socket.off("get_chats")
         $socket.emit("get_chats")
     }
 

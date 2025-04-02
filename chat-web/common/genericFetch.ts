@@ -17,45 +17,36 @@ type Methods = "GET" | "PUT" | "POST" | "DELETE";
 
 async function genericFetch(fetch: IFetch): Promise<IResponse> {
   const auth = authStore();
-
+  
   const { data, error } = await useFetch(fetch.url, {
-    body: fetch.body || null,
+    body: fetch.body ?? null,
     method: fetch.method,
     credentials: fetch.credentials,
     immediate: fetch.immediate,
   });
 
-  try {
-    if (error.value != null) {
-      const res = error.value.data as IResponse;
+  if (error.value) {
+    const res = error.value.data as IResponse;
 
-      if (res.status === 401) {
-        const res = await auth.refresh();
-
-        if (res.status !== 200) {
-          return Promise.reject(res);
-        }
-
-        return genericFetch(fetch);
-      } else {
-        return Promise.resolve(res);
+    // 401 hatasında refresh yapıp tekrar deneyelim
+    if (res.status === 401) {
+      const refreshRes = await auth.refresh();
+      if (refreshRes.status !== 200) {
+        throw refreshRes;
       }
+      // Sonsuz döngüyü önlemek için refresh sonrası hata alınıyorsa döngü kesilebilir.
+      return genericFetch(fetch);
     }
-
-    const res = data.value as IResponse;
-
-    return Promise.resolve(res);
-  } catch (e) {
-    if (e instanceof Error) {
-      return Promise.reject({ message: e.message, status: 500 } as IResponse);
-    }
-
-    return Promise.reject({
-      message: "Something went wrong",
-      status: 500,
-    } as IResponse);
+    
+    // Diğer hatalarda, hatayı fırlatıyoruz
+    throw res;
   }
+
+  // Veri geldiyse
+  const res = data.value as IResponse;
+  return res;
 }
+
 
 export async function clientSideFetch(fetch: IFetch): Promise<IResponse> {
   try {

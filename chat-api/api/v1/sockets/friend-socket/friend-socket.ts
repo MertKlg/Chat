@@ -6,19 +6,19 @@ import errorCodes from "../../common/error-codes";
 import onlineUserPool from "../pool/online-user-pool";
 import { genericProfilePhotoCompleter } from "../../common/generic-func";
 import { getFriendRequests, getFriends, checkFriendRequest, sendFriendRequest, searchUser, updateFriendRequest } from "../helpers/friends-query-helper";
+import FriendStatus from "../../model/types/friend-status";
+import { findUser } from "../helpers/user-query-helpers";
+import IResponse from "../../model/interface/iresponse";
 
 const friendSocket = (socket: Socket, io: Server) => {
-  const { user_id, username } = socket.data.user;
+  const { user_id,username } = socket.data.user;
 
   socket.on("get_friends", async (data) => {
     try {
-
-      const userFriends = await getFriends(user_id)
-
       socket.emit("get_friends_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(userFriends as any),
+        value: await getFriends(user_id),
       } as ResponseModel);
 
     } catch (e) {
@@ -38,13 +38,10 @@ const friendSocket = (socket: Socket, io: Server) => {
 
   socket.on("get_friend_requests", async () => {
     try {
-      
-      const friendsRequests = await getFriendRequests(user_id)
-
       socket.emit("get_friend_requests_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: genericProfilePhotoCompleter(friendsRequests),
+        value: await getFriendRequests(user_id),
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
@@ -75,22 +72,18 @@ const friendSocket = (socket: Socket, io: Server) => {
         return;
       }
 
+      console.log(receiver_id)
+
       await sendFriendRequest(user_id, receiver_id)
 
-      const onlineUser = onlineUserPool.getUserSocketId(receiver_id);
-      if (onlineUser)
-        socket
-          .to(onlineUser)
-          .emit("friend_request_getted_result", {
-            message: "A new friends request",
-            status: 200,
-            value: [{ username: username }],
-          } as ResponseModel);
+      socket.to(receiver_id)
+      .emit("notification_channel", { message : `${username ?? "A user"} sent you a friend request`, status : 200 } as ResponseModel)
 
       socket.emit("friend_request_result", {
         message: "Request sended",
         status: 200,
       } as ResponseModel);
+
     } catch (e) {
       if (e instanceof Error) {
         socket.emit("friend_request_result", {
@@ -118,12 +111,10 @@ const friendSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-      const result  = await searchUser(user_id, username)
-
       socket.emit("search_user_result", {
         message: "Success",
         status: 200,
-        value: genericProfilePhotoCompleter(result),
+        value: await searchUser(user_id, username),
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
@@ -143,9 +134,23 @@ const friendSocket = (socket: Socket, io: Server) => {
   socket.on("update_friend_request", async (data) => {
     try {
       const { sender_id, status } = data;
-
       await updateFriendRequest(user_id, sender_id, status)
-      
+      const user = await findUser(user_id)
+
+      console.log(status as string)
+
+      if((status as string).toLowerCase().trim() == FriendStatus.Accepted.toLowerCase().trim()){
+        socket.to(sender_id)
+        .emit("notification_channel", {
+          message : `${user[0].username ?? "A user"} accepted your friend request`,
+          status : 200
+        } as IResponse)
+
+        
+
+      }
+
+
       socket.emit("update_friend_request_result", {
         message: "Success",
         status: 200,

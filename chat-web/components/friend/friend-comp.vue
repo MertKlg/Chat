@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <div class="mt-2" v-if="objects.searchedFriends && objects.searchedFriends.length > 0 && showResult">
+            <div class="mt-2" v-if="objects.searchedFriends && objects.searchedFriends.length > 0">
                 <h5 class="mt-2">Results</h5>
                 <ul class="list-group">
                     <li class="list-group-item" v-for="item in objects.searchedFriends" :key="item.user_id">

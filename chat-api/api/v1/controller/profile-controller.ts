@@ -65,7 +65,7 @@ export const updateProfilePhoto = genericFunc(async (req,res,next) => {
 
 export const deleteProfile = genericFunc(async (req,res,next) => {
   const { user_id } = res.locals.user
-  await databasePool.query(`update users set username = ? and is_active = 'DEACTIVE' where user_id = ?`, ['deleted_account', user_id])
+  await databasePool.query(`update users set username = ?, email = '', password = '', is_active = ? where user_id = ?`, ['deleted_account', 'DEACTIVE' ,user_id])
 
   res.json({ message : "Profile deleted", status : 200 } as ResponseModel)
 })

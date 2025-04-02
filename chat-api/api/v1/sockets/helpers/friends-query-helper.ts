@@ -39,10 +39,16 @@ export const getFriends = async (
 ): Promise<IFriends[]> => {
   try {
     return (
+      /*
+      
+         */
       await databasePool.query(
-        `SELECT u.user_id, u.username, u.photo, u.email FROM friends f LEFT JOIN users u ON (u.user_id = CASE WHEN f.sender_id = ? THEN f.receiver_id ELSE f.sender_id END)
+        `SELECT u.user_id, u.username, u.email, CASE
+        WHEN u.photo IS NULL THEN '/storage/defaults/default_profile_image.png'
+        ELSE CONCAT('/storage/', u.user_id, '/', u.photo)
+    END AS photo  FROM friends f LEFT JOIN users u ON (u.user_id = CASE WHEN f.sender_id = ? THEN f.receiver_id ELSE f.sender_id END)
         WHERE f.status = 'Accepted'  
-        AND (f.sender_id = ? OR f.receiver_id = ?)`,
+        AND (f.sender_id = ? OR f.receiver_id = ?) `,
         [user_id, user_id, user_id]
       )
     )[0] as IFriends[];
@@ -55,7 +61,7 @@ export const getFriends = async (
 export const getFriendRequests = async(user_id : number) : Promise<IFriendRequests[]> => {
     try{
       return (await databasePool.query(
-        `select u.user_id, u.username, u.photo, u.email from users u inner join friends f on f.sender_id = u.user_id where f.receiver_id = ? and f.status = 'waiting'`,
+        `select u.user_id, u.username, u.email, case when u.photo is null then '/storage/defaults/default_profile_image.png' else concat('/storage/',u.user_id,'/',u.photo) end from users u inner join friends f on f.sender_id = u.user_id where f.receiver_id = ? and f.status = 'waiting'`,
         [user_id , 'waiting']
       ))[0] as IFriendRequests[]
     }catch(e){
@@ -87,12 +93,12 @@ export const searchUser = async(user_id : number,username : string) : Promise<IS
     u.user_id,
     u.username,
     u.email,
-    u.photo,
     CASE
       WHEN f.status = 'ACCEPTED' THEN 'ACCEPTED'
       WHEN f.status = 'WAITING' THEN 'WAITING'
       ELSE 'not_friends'
-    END AS friend_status
+    END AS friend_status,
+    case when u.photo is null then '/storage/defaults/default_profile_image.png' else concat('/storage/',u.user_id,'/',u.photo) end as photo
   FROM users u
   LEFT JOIN friends f 
     ON (

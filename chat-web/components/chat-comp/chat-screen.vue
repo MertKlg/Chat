@@ -1,8 +1,8 @@
 <template>
-  <div class="container h-100 position-relative">
+  <div class="container border border-left rounded-start rounded-4 p-0 m-0 h-100 position-relative">
     <div class="chat-screen h-100 d-flex flex-column">
-      <div class="chat-header bg-light p-3 border-bottom">
-        <h5 class="m-0">Chat</h5>
+      <div class="chat-header p-3 border-bottom">
+        <h5 class="m-0">{{ currentUsername }}</h5>
       </div>
       <div class="chat-messages flex-grow-1 overflow-auto px-3" id="chat-messages">
 
@@ -34,11 +34,35 @@
                 <img :src="config.public.BASE_URL + message.chat_image" class="img-fluid rounded"
                   style="max-height: 150px; object-fit: cover;">
               </div>
-              {{ message.message }}
+
+              <div v-if="updateMessageChatId === message.chat_message_id">
+                <input type="text" class="form-control border-0 bg-none" v-model="newUpdateChatMessage">
+              </div>
+
+              <div v-else>
+                {{ message.message }}
+              </div>
             </div>
-            <div class="message-time small text-muted"
-              :class="{ 'text-end': message.user_id === profile.userProfile?.user_id, 'text-start': message.user_id !== profile.userProfile?.user_id }">
-              {{ message.sended_at }}
+            <div class="message-footer d-flex flex-column justify-content-between align-items-center mt-1">
+              <div class="message-time small text-muted">
+                {{ message.sended_at }}
+              </div>
+
+              <div class="d-flex mt-2 justify-content-end w-100" v-if="message.user_id == profile.userProfile?.user_id">
+                <button class="btn btn-light p-0 m-0 border-0 bg-transparent"
+                  @click="deleteMessage(message.chat_message_id)">
+                  <span class="material-symbols-outlined d-flex align-items-center p-0 m-0 fs-5">
+                    delete
+                  </span>
+                </button>
+
+                <button class="btn btn-light p-0 m-0 border-0 bg-transparent"
+                  @click="editMessage(message.chat_message_id, message.message)">
+                  <span class="material-symbols-outlined d-flex align-items-center p-0 m-0 fs-5">
+                    edit
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -77,9 +101,13 @@
           </label>
           <input id="file-upload" type="file" accept=".png,.jpg,.jpeg" @change="onFileChange" style="display: none">
 
-          <input type="text" v-model="newMessage" placeholder="Mesaj yaz..."
-            class="form-control rounded-pill border-0 bg-light mx-1" @keyup.enter="sendMessage">
-          <button class="btn btn-primary rounded-pill" @click="sendMessage">Send</button>
+          <input type="text" v-model="newMessage" placeholder="Write a any message..."
+            class="form-control rounded-pill border-0 mx-2 bg-none" @keyup.enter="sendMessage">
+          <button class="btn btn-primary rounded-pill" @click="sendMessage">
+            <span class="material-symbols-outlined d-flex align-items-center p-0 m-0">
+              send
+            </span>
+          </button>
         </div>
       </div>
     </div>
@@ -104,14 +132,18 @@ interface IMessages {
 
 const profile = profileStore()
 const { $socket } = useNuxtApp();
-const props = defineProps(["chat_id"])
+const props = defineProps(["chat_info"])
 const messages = ref<IMessages[]>([])
+const currentUsername = ref("")
 var newMessage = ref("")
 const toast = toastStore()
 const currentChatId = ref<string | null>(null)
 const selectedFiles = ref<File[] | null>(null)
 const isUploading = ref(false);
 const config = useRuntimeConfig();
+
+const updateMessageChatId = ref<string>("")
+const newUpdateChatMessage = ref<string>("")
 
 /* JS */
 const scrollMessages = () => {
@@ -121,38 +153,62 @@ const scrollMessages = () => {
 }
 
 /* SOCKET */
-watch(() => props.chat_id, (newChat, oldChat) => {
+watch(() => props.chat_info, (newChat, oldChat) => {
   if (newChat) {
     $socket.off("get_chat_messages_result");
     $socket.off("send_chat_message_result");
     $socket.off("send_chat_image_result");
     $socket.off("join_chat_room");
+    $socket.off("edit_chat_message")
 
-    const { chat_id } = newChat
+    const { chat_id, username } = newChat
+    currentUsername.value = username
     currentChatId.value = chat_id
     messages.value = []
-    $socket.emit("join_chat_room", { chat_id: chat_id })
     $socket.emit("get_chat_messages", { chat_id: chat_id })
   }
 }, { immediate: true })
 
+
+
 /* Actions */
 const sendMessage = () => {
   if (!newMessage.value.trim()) return;
-  const { chat_id } = props.chat_id
+  const { chat_id, username } = props.chat_info
   $socket.emit("send_chat_message", { chat_id: chat_id, message: newMessage.value })
 }
+
+const deleteMessage = (chat_message_id: string) => {
+  if (confirm("Are you sure delete this message ?")) {
+    $socket.emit("delete_chat_message", { chat_message_id: chat_message_id, chat_id: props.chat_info.chat_id })
+  }
+}
+
+const editMessage = (chat_message_id: string, oldMessage: string) => {
+  if (!updateMessageChatId.value) {
+    updateMessageChatId.value = chat_message_id
+    newUpdateChatMessage.value = oldMessage
+  } else if (newUpdateChatMessage.value != oldMessage) {
+    $socket.emit("edit_chat_message", { chat_message_id: chat_message_id, message: newUpdateChatMessage.value, chat_id: props.chat_info.chat_id })
+  } else {
+    updateMessageChatId.value = ""
+    newUpdateChatMessage.value = ""
+  }
+
+}
+
 
 
 const sendImage = async () => {
   try {
+    const { chat_id } = props.chat_info
     if (isUploading.value) return;
     isUploading.value = true;
 
     // Get chat_id from props or current value
-    const chat_id = props.chat_id?.chat_id || currentChatId.value;
+    const checkChatId = chat_id || currentChatId.value;
 
-    if (!chat_id) {
+    if (!checkChatId) {
       toast.error({ title: 'Chat not found', description: 'Please try again' });
       isUploading.value = false;
       return;
@@ -196,7 +252,7 @@ const sendImage = async () => {
     toast.warning({ title: 'Uploading image...', description: 'Please wait' });
 
     // Send to socket - now with resolved base64 strings
-    $socket.emit("send_chat_image", { chat_id, images: validImages });
+    $socket.emit("send_chat_image", { chat_id: defProps.value?.chat_id, images: validImages });
   } catch (e) {
     console.error("Error sending image:", e);
     toast.error({ title: 'Failed to send image', description: 'Please try again' });
@@ -316,6 +372,33 @@ $socket.on("send_chat_image_result", (response) => {
     toast.error({ title: 'Error processing upload', description: 'Please try again' });
   }
 });
+
+$socket.on("edit_chat_message_result", (response) => {
+  try {
+    const res = response as IResponse
+    if (res.status == 200) {
+      updateMessageChatId.value = ""
+      newUpdateChatMessage.value = ""
+    }
+
+    toast.sendToastWithResponse(res)
+  } catch (e) {
+
+  }
+})
+
+
+$socket.on("delete_chat_message_result", (response) => {
+  try {
+    const res = response as IResponse
+    if (res.status == 200) {
+      toast.sendToastWithResponse(res)
+    }
+  } catch (e) {
+
+  }
+})
+
 </script>
 
 <style scoped>

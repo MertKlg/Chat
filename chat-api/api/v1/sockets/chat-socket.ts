@@ -6,6 +6,9 @@ import { writeFileToFolderAsync } from "../../../service/file-service";
 import {
   checkChat,
   createChat,
+  deleteChatMessage,
+  editChatMessage,
+  getChatMembers,
   getChatMessages,
   getChats,
   getLastChatMessage,
@@ -15,19 +18,13 @@ import {
 const chatSocket = (socket: Socket, io: Server) => {
   const { user_id } = socket.data.user;
 
-  socket.on("join_chat_room", (data) => {
-    const { chat_id } = data;
-    socket.join(chat_id);
-  });
-
   socket.on("get_chats", async () => {
     try {
-      const getUserChats = await getChats(user_id);
 
       socket.emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
-        value: getUserChats,
+        value: await getChats(user_id),
       } as ResponseModel);
     } catch (e) {
       if (e instanceof Error) {
@@ -62,10 +59,12 @@ const chatSocket = (socket: Socket, io: Server) => {
 
       await createChat(user_id, to_user_id);
 
-      socket.emit("create_chat_result", {
+      socket.emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
+        value: await getChats(user_id)
       } as ResponseModel);
+
     } catch (e) {
       if (e instanceof Error) {
         socket.emit("create_chat_result", {
@@ -111,29 +110,41 @@ const chatSocket = (socket: Socket, io: Server) => {
     try {
       const { chat_id, message } = data;
 
+      const getMembers = await getChatMembers(chat_id)
+
+      if(getMembers.length <= 0){
+        socket.emit("send_chat_message_result", {
+          message: "Chat not founded",
+          status: 400,
+        } as ResponseModel);
+        return
+      }
+
       const ifError = await sendChatMessage(message, user_id, chat_id);
       if (ifError) {
         socket.emit("send_chat_message_result", {
           message: "Your message could not be sent. Please try again",
           status: 400,
         } as ResponseModel);
-
         return;
       }
 
       const lastMessage = await getLastChatMessage(user_id, chat_id);
 
-      io.to(chat_id).emit("get_chat_messages_result", {
+      const userIds = getMembers.map(e => e.user_id)
+
+      io.to(userIds).emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
         value: lastMessage,
       } as ResponseModel);
 
-      io.to(chat_id).emit("get_chats_result", {
+      io.to(userIds).emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
         value: lastMessage,
       } as ResponseModel);
+
     } catch (e) {
       if (e instanceof Error) {
         socket.emit("get_chat_messages_result", {
@@ -152,7 +163,19 @@ const chatSocket = (socket: Socket, io: Server) => {
   socket.on("send_chat_image", async (data) => {
     try {
       const { chat_id, images } = data;
+
+      const getMembers = await getChatMembers(chat_id)
+
+      if(getMembers.length <= 0){
+        socket.emit("send_chat_message_result", {
+          message: "Chat not founded",
+          status: 400,
+        } as ResponseModel);
+        return
+      }
+      
       const imgs = images as string[];
+
       const fileNames = await writeFileToFolderAsync(chat_id, imgs);
 
       await Promise.all(
@@ -166,13 +189,15 @@ const chatSocket = (socket: Socket, io: Server) => {
 
       const lastMessage = await getLastChatMessage(user_id, chat_id);
 
-      io.to(chat_id).emit("get_chat_messages_result", {
+      const userIds = getMembers.map(e => e.user_id)
+
+      io.to(userIds).emit("get_chat_messages_result", {
         message: errorCodes.SUCCESS,
         status: 200,
         value: lastMessage,
       } as ResponseModel);
 
-      io.to(chat_id).emit("get_chats_result", {
+      io.to(userIds).emit("get_chats_result", {
         message: errorCodes.SUCCESS,
         status: 200,
         value: lastMessage,
@@ -196,6 +221,59 @@ const chatSocket = (socket: Socket, io: Server) => {
       } as ResponseModel);
     }
   });
+
+  socket.on("edit_chat_message", async (data) => {
+    try{
+      const {chat_message_id, chat_id} = data
+
+      await editChatMessage(chat_id,chat_message_id,data.message)
+
+      const getMembers = await getChatMembers(chat_id)
+
+      const users = getMembers.map(e => e.user_id)
+      
+      io.to(users).emit("get_chat_messages_result", { 
+        message : errorCodes.SUCCESS,
+        status : 200,
+        value : await getChatMessages(user_id,chat_id)
+       } as ResponseModel)
+
+       socket.emit("edit_chat_message_result", {
+        message : "Message updated",
+        status : 200
+       } as ResponseModel)
+      
+    }catch(e){
+      console.error(e)
+    }
+  })
+
+  socket.on("delete_chat_message", async (data) => {
+    try{
+      const {chat_message_id, chat_id} = data
+
+      const getMembers = await getChatMembers(chat_id)
+
+      await deleteChatMessage(chat_id,chat_message_id)
+
+      const userIds = getMembers.map(e => e.user_id)
+      
+      io.to(userIds).emit("get_chat_messages_result", {
+        message : errorCodes.SUCCESS,
+        status : 200,
+        value : await getChatMessages(user_id,chat_id)
+      } as ResponseModel)
+
+      socket.emit("delete_chat_message_result", {
+        message : "Message deleted",
+        status : 200
+       } as ResponseModel)
+
+      
+    }catch(e){
+      console.error(e)
+    }
+  })
 };
 
 export default chatSocket;
