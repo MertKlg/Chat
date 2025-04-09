@@ -1,10 +1,7 @@
 <template>
 
-  <div class="col-3 position-relative" :class="{
-    'col-3' : !menu.isMenuOpen,
-    'col-0' : menu.isMenuOpen
-  }">
-    <div class="d-xl-flex d-none flex-column h-100 positon-relative p-0 m-0">
+  <div class="col-3 position-relative">
+    <div class="d-md-flex d-none flex-column h-100 positon-relative p-0 m-0">
       <div class="p-2">
         <div class="d-flex justify-content-between">
           <button type="button" class="btn w-100 btn-secondary" @click="changeComp(FriendComp)">

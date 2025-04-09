@@ -5,9 +5,9 @@
      />
 
     <div class="col p-0 m-0 h-100 positon-relative">
-      <button class="">Open Menu</button>
+      <button class="d-lg-none">Open Menu</button>
       <component 
-      :key="currentComp.props"
+      :key="currentComp.props.chat_id || currentComp.component.name"
        :is="currentComp.component" 
        :chat_info="currentComp.props"
        />

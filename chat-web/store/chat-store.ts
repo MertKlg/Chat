@@ -22,7 +22,6 @@ export const chatStore = defineStore("chatStore", () => {
         $socket.on("get_chats_result", (response) => {
             try {
                 const res = response as IResponse
-                console.log("get_chats_result : ", res)
                 const chatResponse = res.value as IChat[]
 
                 if (chats.value.length <= 0) {

@@ -15,28 +15,32 @@ class OnlineChatPool{
         return OnlineChatPool.instance;
     }
 
-    public joinRoom(usersId : string, chatId : string){
+    public joinRoom(userId : string, chatId : string){
         if(!this.chat.has(chatId)){
             this.chat.set(chatId, new Set())
         }
 
-        this.chat.get(chatId)!.add(usersId)
+        this.chat.get(chatId)!.add(userId)
     }
 
-    public leaveRoom(usersId : string, chatId : string){
+    public leaveRoom(userId : string, chatId : string){
         if(!this.chat.has(chatId)){
             return
         }
 
-        this.chat.get(chatId)!.delete(usersId)
+        this.chat.get(chatId)!.delete(userId)
 
         if(this.chat.get(chatId)!.size === 0){
             this.chat.delete(chatId)
         }
     }
 
-    public getUsersInRoom(chatId : string) : Set<string> | undefined{
-        return this.chat.get(chatId);
+    public getUsersInRoom(chatId : string) : string[]{
+        const users = this.chat.get(chatId)
+        if(!users){
+            return []
+        }
+        return Array.from(users)
     }
 
 }
