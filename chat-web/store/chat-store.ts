@@ -1,3 +1,4 @@
+import type IGroupChat from "~/model/interfaces/igroup-chat"
 import type IResponse from "~/model/interfaces/iresponse"
 import type IUser from "~/model/interfaces/iuser"
 
@@ -14,48 +15,78 @@ export const chatStore = defineStore("chatStore", () => {
 
     const { $socket } = useNuxtApp()
 
-    const chats = ref<IChat[]>([])
+    const chats = reactive<{privateChat : IChat[], groupChats : IGroupChat[]}>({privateChat : [], groupChats : []})
+    
+    const get_group_chats_result = (response : any) => {
+        try {
+            const res = response as IResponse
+            const chatResponse = res.value as IGroupChat[]
 
-    // Get exists user chats
-    const getChats = () => {
-        emitChat()
-        $socket.on("get_chats_result", (response) => {
-            try {
-                const res = response as IResponse
-                const chatResponse = res.value as IChat[]
-
-                if (chats.value.length <= 0) {
-                    chats.value = chatResponse
-                    return
-                }
-
-                const findRelatedChat = chatResponse.find(e => chats.value.find(d => e.chat_id == d.chat_id))
-
-                if (!findRelatedChat) {
-                    return
-                }
-
-                chats.value.find(e => e.chat_id == findRelatedChat.chat_id)!.message = findRelatedChat.message
-            } catch (e) {
-                console.error(e)
+            if (chats.groupChats.length <= 0) {
+                chats.groupChats.push(...chatResponse)
+                return
             }
-        })
+
+            const findRelatedChat = chatResponse.find(e => chats.groupChats.find(d => e.group_id == d.group_id))
+
+            if (!findRelatedChat) {
+                return
+            }
+
+            chats.groupChats.find(e => e.group_id == findRelatedChat.group_id)!.group_name = findRelatedChat.group_name
+            
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    const get_chats_result = (response : any) => {
+        try {
+            const res = response as IResponse
+            const chatResponse = res.value as IChat[]
+
+            if (chats.privateChat.length <= 0) {
+                chats.privateChat.push(...chatResponse)
+                return
+            }
+
+            const findRelatedChat = chatResponse.find(e => chats.privateChat.find(d => e.chat_id == d.chat_id))
+
+            if (!findRelatedChat) {
+                return
+            }
+
+            chats.privateChat.find(e => e.chat_id == findRelatedChat.chat_id)!.message = findRelatedChat.message
+        } catch (e) {
+            console.error(e)
+        }
     }
 
     const checkChat = (userId : number | undefined) : number | undefined => {
         if(!userId) return
 
-        const findFriend = chats.value.find(e => e.user_id == userId)?.user_id
+        const findFriend = chats.privateChat.find(e => e.user_id == userId)?.user_id
         return findFriend
     }
 
     const emitChat = () => {
-        $socket.off("get_chats")
+        closeListens()
+
         $socket.emit("get_chats")
+        $socket.emit("get_group_chats")
+
+        $socket.on("get_chats_result", get_chats_result)
+        $socket.on("get_group_chats_result", get_group_chats_result)
     }
+
+    const closeListens = () => {
+        $socket.off("get_chats_result")
+        $socket.off("get_group_chats_result")
+    }
+
 
     const refreshChat = () => emitChat()
 
     
-    return { getChats, chats, refreshChat, checkChat }
+    return { chats, refreshChat, checkChat, emitChat}
 })

@@ -1,14 +1,10 @@
 import { Server, Socket } from "socket.io";
-import databasePool from "../../../../service/database";
-import ResponseModel from "../../model/error-model";
-import IFriend from "../../model/interface/ifriend";
-import errorCodes from "../../common/error-codes";
-import onlineUserPool from "../pool/online-user-pool";
-import { genericProfilePhotoCompleter } from "../../common/generic-func";
-import { getFriendRequests, getFriends, checkFriendRequest, sendFriendRequest, searchUser, updateFriendRequest } from "../helpers/friends-query-helper";
-import FriendStatus from "../../model/types/friend-status";
-import { findUser } from "../helpers/user-query-helpers";
-import IResponse from "../../model/interface/iresponse";
+import ResponseModel from "../model/error-model";
+import errorCodes from "../common/error-codes";
+import { getFriendRequests, getFriends, checkFriendRequest, sendFriendRequest, searchUser, updateFriendRequest } from "./helpers/friends-query-helper";
+import FriendStatus from "../model/types/friend-status";
+import { findUser } from "./helpers/user-query-helpers";
+import IResponse from "../model/interface/iresponse";
 
 const friendSocket = (socket: Socket, io: Server) => {
   const { user_id,username } = socket.data.user;
@@ -72,8 +68,6 @@ const friendSocket = (socket: Socket, io: Server) => {
         return;
       }
 
-      console.log(receiver_id)
-
       await sendFriendRequest(user_id, receiver_id)
 
       socket.to(receiver_id)
@@ -104,7 +98,7 @@ const friendSocket = (socket: Socket, io: Server) => {
       const { username } = data;
 
       if (!username) {
-        socket.emit("search_friend_result", {
+        socket.emit("search_user_result", {
           message: "Username required",
           status: 400,
         } as ResponseModel);

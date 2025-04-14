@@ -1,8 +1,9 @@
 <template>
   <div class="container border border-left rounded-start rounded-4 p-0 m-0 h-100 position-relative">
     <div class="chat-screen h-100 d-flex flex-column">
-      <div class="chat-header p-3 border-bottom">
-        <h5 class="m-0">{{ currentUsername }}</h5>
+      <div class="chat-header p-3 border-bottom d-flex align-items-center">
+        <img  :src="config.public.BASE_URL + props.chat_info.photo" style="height: 40px; width:40px; overflow: hidden; object-fit: cover;" class="me-2 img-fluid rounded-circle" alt="" />
+        <h5 class="m-0">{{ props.chat_info.title }}</h5>
       </div>
       <div class="chat-messages flex-grow-1 overflow-auto px-3" id="chat-messages">
 
@@ -140,7 +141,6 @@
 import type IResponse from '~/model/interfaces/iresponse';
 import profileStore from '~/store/profile-store';
 import { watch, ref, defineProps, nextTick } from "vue"
-import toastStore from '~/store/toast-store';
 import type IMessages from '~/model/interfaces/imessages';
 import type ISeemedMessage from '~/model/interfaces/iseemed-message';
 import ChatListComp from './list/chat-list-comp.vue';
@@ -152,11 +152,7 @@ const { $socket } = useNuxtApp();
 const props = defineProps(["chat_info"])
 const messages = ref<IMessages[]>([])
 const seemedMessage = ref<ISeemedMessage[]>([])
-
-const currentUsername = ref("")
-const toast = toastStore()
-
-
+const config = useRuntimeConfig()
 
 /* JS */
 const scrollMessages = () => {

@@ -1,8 +1,9 @@
 import { Server } from "socket.io";
 import { socketVerifyUser } from "./middleware/socket-verify-user";
 import { webSocketAccessTokenVerify } from "./middleware/socket-token-verify";
-import friendSocket from "./friend-socket/friend-socket";
+import friendSocket from "./friend-socket";
 import chatSocket from "./chat-socket";
+import chatGroupSocket from "./chat-group-socket";
 
 
 const appSocket = (io : Server) => {
@@ -15,9 +16,9 @@ const appSocket = (io : Server) => {
 
         friendSocket(socket, io)
         chatSocket(socket, io)
+        chatGroupSocket(socket,io)
 
         socket.on('disconnect', () => {
-          
         });
       });
 }

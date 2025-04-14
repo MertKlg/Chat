@@ -1,6 +1,7 @@
 import { QueryResult } from "mysql2";
 import databasePool from "../../../../service/database";
 import IUser from "../../model/interface/iuser";
+import IuuidResult from "../../model/interface/iuuid-result";
 interface IChat {
     username: string;
     photo: string;
@@ -31,38 +32,38 @@ interface ICreateChatResult{
     chat_id : string
 }
 
-interface IuuidResult {
-    uuid: string;
-}
 
 export const getChats = async (user_id: string) => {
     return (
         await databasePool.query(
             `SELECT
-    user.username,
-    user.user_id,
-    message.message,
-    BIN_TO_UUID(member.chat_id) AS chat_id,
+    u.username,
+    u.user_id,
+    cm.chat_id AS chat_id_bin,
+    BIN_TO_UUID(cm.chat_id) AS chat_id,
+    lm.message,
     CASE
-        WHEN user.photo IS NULL THEN '/storage/defaults/default_profile_image.png'
-        ELSE CONCAT('/storage/', user.user_id, '/', user.photo)
+        WHEN u.photo IS NULL THEN '/storage/defaults/default_profile_image.png'
+        ELSE CONCAT('/storage/', u.user_id, '/', u.photo)
     END AS photo
 FROM
-    chat_members member
+    chat_members cm
 INNER JOIN
-    users user ON user.user_id = member.user_id
+    users u ON u.user_id = cm.user_id
+INNER JOIN
+    chat_table ct ON cm.chat_id = ct.chat_id AND ct.chat_type = 'Personal'
 LEFT JOIN
-    chat_messages message ON member.chat_id = message.chat_id
-    AND message.sended_at = (
+    chat_messages lm ON cm.chat_id = lm.chat_id
+    AND lm.sended_at = (
         SELECT
             MAX(m2.sended_at)
         FROM
             chat_messages m2
         WHERE
-            m2.chat_id = member.chat_id
+            m2.chat_id = cm.chat_id
     )
 WHERE
-    member.chat_id IN (
+    cm.chat_id IN (
         SELECT
             chat_id
         FROM
@@ -70,9 +71,9 @@ WHERE
         WHERE
             user_id = ?
     )
-    AND member.user_id != ?
+    AND cm.user_id != ?
 ORDER BY
-    message.sended_at asc;`,
+    lm.sended_at DESC;`,
             [user_id, user_id]
         )
     )[0] as IChat[];
@@ -122,16 +123,28 @@ export const sendChatMessage = async (
     message: string,
     users_id: string,
     chat_id: string
-) => {
-    try {
+) : Promise<Error | null>  => {
+
+    try{
+        const getConnection = await databasePool.getConnection()
+
+        await getConnection.beginTransaction()
+    
         await databasePool.query(
             `insert into chat_messages(message, user_id, chat_id) values(?, ?, uuid_to_bin(?))`,
             [message, users_id, chat_id]
         );
-    } catch (e) {
-        if (e instanceof Error) {
-            return e;
+    
+    
+        await getConnection.commit()
+    
+        return null
+        
+    }catch(e){
+        if(e instanceof Error){
+            return e
         }
+        return Error("Something went wrong")
     }
 };
 

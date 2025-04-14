@@ -4,8 +4,7 @@
     @comp-changed="changeComp"
      />
 
-    <div class="col p-0 m-0 h-100 positon-relative">
-      <button class="d-lg-none">Open Menu</button>
+    <div class="col p-0 m-0 h-100">
       <component 
       :key="currentComp.props.chat_id || currentComp.component.name"
        :is="currentComp.component" 
@@ -22,6 +21,7 @@ import { ref } from "vue";
 import ChatMenu from "~/components/menu-comp/chat-menu.vue";
 import ResponseModel from "~/model/response-model";
 import toastStore from "~/store/toast-store";
+
 useHead({
   title : "Chat"
 })
@@ -39,8 +39,14 @@ const changeComp = (component: any, props: {}) => {
   currentComp.value = {component,props}
 }
 
+onMounted( () => {
+  $socket.on("notification_channel", notification_channel)
+})
 
-$socket.on("notification_channel", (response) => {
+
+onUnmounted(() => $socket.off("notification_channel"))
+
+const notification_channel = (response : any) => {
   try{
     const res = response as ResponseModel
     toast.sendToastWithResponse(res)
@@ -54,6 +60,7 @@ $socket.on("notification_channel", (response) => {
     const res = new ResponseModel("Something went wrong", 500)
     toast.sendToastWithResponse(res)
   }
-})
+}
+
 </script>
 
