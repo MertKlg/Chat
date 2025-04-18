@@ -27,6 +27,12 @@ class _FirendSearchPageState extends State<FirendSearchPage> {
     _connectSocket();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _searchFriend(context);
+  }
+
   Future<void> _connectSocket() async {
     bool isConnected = await _friendRemoteSocketDatasource.connect();
     if (isConnected) {
@@ -121,9 +127,9 @@ class _FirendSearchPageState extends State<FirendSearchPage> {
               subtitle: Text(firend.email),
               trailing: Column(
                 children: [
-                  (firend.friendStatus == 'friend')
+                  (firend.friendStatus == 'FRIEND')
                       ? Text('Arkadaş')
-                      : (firend.friendStatus == 'waiting')
+                      : (firend.friendStatus == 'WAITING')
                           ? Text('Beklemede')
                           : ElevatedButton(
                               onPressed: () {

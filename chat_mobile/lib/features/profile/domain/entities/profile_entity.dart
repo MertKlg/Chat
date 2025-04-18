@@ -1,13 +1,13 @@
-class FriendRequestEntity {
+class ProfileEntity {
   final int userId;
   final String username;
   final String email;
-  final String photo;
+  final String phone;
 
-  FriendRequestEntity({
+  ProfileEntity({
     required this.userId,
     required this.username,
     required this.email,
-    required this.photo,
+    required this.phone,
   });
 }

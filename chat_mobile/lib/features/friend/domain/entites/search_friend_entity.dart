@@ -8,4 +8,12 @@ class SearchFriendEntity {
       required this.userName,
       required this.email,
       required this.friendStatus});
+
+  SearchFriendEntity copyWith({String? friendStatus}) {
+    return SearchFriendEntity(
+        userId: userId,
+        userName: userName,
+        email: email,
+        friendStatus: friendStatus ?? this.friendStatus);
+  }
 }

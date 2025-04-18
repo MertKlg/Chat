@@ -1,3 +1,6 @@
+import 'package:chat_android/core/base_response.dart';
+import 'package:chat_android/features/friend/domain/entites/friend_request_entity.dart';
+import 'package:chat_android/features/friend/domain/entites/search_friend_entity.dart';
 import 'package:chat_android/features/friend/domain/usecasses/add_friend_usecassess.dart';
 import 'package:chat_android/features/friend/domain/usecasses/firend_get_request_usecassess.dart';
 import 'package:chat_android/features/friend/domain/usecasses/friend_update_request_usscasses.dart';
@@ -28,7 +31,10 @@ class FriendBlock extends Bloc<FriendEvent, FriendState> {
     on<UpdateFriendRequestEvent>(_onUpdateFriendRequest);
     on<GetFriendEvent>(_getFriends);
   }
-
+  List<SearchFriendEntity> searchResults = [];
+  List<FriendRequestEntity> friendRequests = [];
+  BaseResponseModel<SearchFriendEntity> searchResult =
+      BaseResponseModel(message: '', status: 0);
   Future<void> _getFriends(
       GetFriendEvent event, Emitter<FriendState> emit) async {
     emit(FriendLoading());
@@ -36,8 +42,9 @@ class FriendBlock extends Bloc<FriendEvent, FriendState> {
       final responseModel = await getFriendsUsecasses.call();
       if (responseModel.status == 200) {
         emit(GetFriendsSuccess(
-            message: responseModel.message,
-            friendRequests: responseModel.data!));
+          message: responseModel.message,
+          friendRequests: responseModel.data!,
+        ));
         log('👫 Arkadaşlar getirildi: ${responseModel.message}');
         log('👫 Arkadaşlar verisi Bloc: ${responseModel.data}');
       } else {
@@ -55,7 +62,11 @@ class FriendBlock extends Bloc<FriendEvent, FriendState> {
       final responseModel =
           await friendUpdateRequestUsscasses.call(event.senderId, event.status);
       if (responseModel.status == 200) {
-        emit(FriendSuccess(message: responseModel.message));
+        log('first friend request length: ${friendRequests.length.toString()}');
+        friendRequests.removeWhere((user) => user.userId == event.senderId);
+        log('later friend request length: ${friendRequests.length.toString()}');
+        emit(FriendRequestSuccess(
+            message: responseModel.message, friendRequests: friendRequests));
         log('👫 Arkadaşlık isteği güncellendi: ${responseModel.message}');
       } else {
         emit(FriendFailure(errorMessage: responseModel.message));
@@ -71,6 +82,7 @@ class FriendBlock extends Bloc<FriendEvent, FriendState> {
 
     try {
       final responseModel = await firendGetRequestUsecassess.call();
+      friendRequests = responseModel.data!;
       if (responseModel.status == 200) {
         emit(FriendRequestSuccess(
             message: responseModel.message,
@@ -89,16 +101,17 @@ class FriendBlock extends Bloc<FriendEvent, FriendState> {
 
     try {
       log('🔎 Arama yapılıyor: ${event.username}');
-
-      final responseModel = await searchFriendUsecasses.call(event.username);
-      log('🔎 Arama sonucu: $responseModel');
-      if (responseModel.status == 200) {
-        log('datas: ${responseModel.data}');
+      searchResult = await searchFriendUsecasses.call(event.username);
+      searchResults = searchResult.data!;
+      log(searchResults.length.toString());
+      //final responseModel = await searchFriendUsecasses.call(event.username);
+      //log('🔎 Arama sonucu: $responseModel');
+      if (searchResult.status == 200) {
+        log('datas: ${searchResult.data}');
         emit(FriendSearchSuccess(
-            message: responseModel.message,
-            searchResults: responseModel.data!));
+            message: searchResult.message, searchResults: searchResult.data!));
       } else {
-        emit(FriendFailure(errorMessage: responseModel.message));
+        emit(FriendFailure(errorMessage: searchResult.message));
       }
     } catch (err) {
       throw Exception('Friend search failed in repository: $err');
@@ -108,11 +121,23 @@ class FriendBlock extends Bloc<FriendEvent, FriendState> {
   Future<void> _onAddFriend(
       AddFriendEvent event, Emitter<FriendState> emit) async {
     emit(FriendLoading());
-
+    log('searcresolt: ${searchResults.first.friendStatus}');
     try {
       final responseModel = await addFriendUsecassess.call(event.receiverId);
       if (responseModel.status == 200) {
-        emit(FriendSuccess(message: responseModel.message));
+        log('add response 200');
+        final updatedResults = searchResults.map((user) {
+          if (user.userId == event.receiverId) {
+            log('userıd revicre eşit');
+            return user.copyWith(friendStatus: 'WAITING');
+          }
+          log('userıd revicre eşit değiş');
+          return user;
+        }).toList();
+        log(updatedResults.first.friendStatus);
+        log(updatedResults.first.toString());
+        emit(FriendSearchSuccess(
+            message: responseModel.message, searchResults: updatedResults));
       } else {
         emit(FriendFailure(errorMessage: responseModel.message));
       }

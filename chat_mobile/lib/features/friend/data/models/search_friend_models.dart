@@ -10,7 +10,7 @@ class SearchFriendModels extends SearchFriendEntity {
 
   factory SearchFriendModels.fromJson(Map<String, dynamic> json) {
     return SearchFriendModels(
-        userId: json['users_id'],
+        userId: json['user_id'],
         userName: json['username'],
         email: json['email'],
         friendStatus: json['friend_status']);

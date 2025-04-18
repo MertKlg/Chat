@@ -33,7 +33,11 @@ class _FriendManagementPageState extends State<FriendManagementPage>
         length: 3,
         child: Scaffold(
           appBar: AppBar(
-            title: Text('Arkadaşlar'),
+            title: Text(
+              'Arkadaşlar',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            backgroundColor: Colors.transparent,
             bottom: TabBar(
               controller: _tabController,
               tabs: [

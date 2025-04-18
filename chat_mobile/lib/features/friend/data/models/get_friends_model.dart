@@ -9,7 +9,7 @@ class GetFriendsModel extends GetFriendsEntity {
 
   factory GetFriendsModel.fromJson(Map<String, dynamic> json) {
     return GetFriendsModel(
-        userId: json['users_id'],
+        userId: json['user_id'],
         username: json['username'],
         email: json['email']);
   }

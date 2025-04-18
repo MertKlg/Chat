@@ -7,8 +7,13 @@
 
 import 'package:chat_android/features/auth/data/datasource/auth_remote_data_source.dart';
 import 'package:chat_android/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:chat_android/features/chat/data/datasource/chat_remote_data_source.dart';
+import 'package:chat_android/features/chat/data/repository/chat_repository_imp.dart';
+import 'package:chat_android/features/chat/domain/repository/chat_repository.dart';
 import 'package:chat_android/features/friend/data/datasource/friend_remote_socket_datasource.dart';
 import 'package:chat_android/features/friend/data/repositories/friend_repository_imp.dart';
+import 'package:chat_android/features/profile/data/datasource/profile_remote_data_source.dart';
+import 'package:chat_android/features/profile/data/repository/profile_repository_imp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -21,9 +26,15 @@ void main() {
         AuthRepositoryImpl(authRemoteDataSource: AuthRemoteDataSource());
     final friendRepository =
         FriendRepositoryImp(FriendRemoteSocketDatasource());
+    final profileRepository = ProfileRepositoryImp(
+        profileRemoteDataSource: ProfileRemoteDataSource());
+    final chatRepository =
+        ChatRepositoryImp(chatRemoteDataSource: ChatRemoteDataSource());
     await tester.pumpWidget(MyApp(
       authRepository: authRepository,
       friendRepository: friendRepository,
+      profileRepository: profileRepository,
+      chatRepository: chatRepository,
     ));
 
     // Verify that our counter starts at 0.

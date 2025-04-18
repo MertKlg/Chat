@@ -23,7 +23,7 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
     _friendRemoteSocketDatasource = FriendRemoteSocketDatasource();
     super.initState();
     _connectSocket();
-    //_getFriendRequest();
+    // _getFriendRequest();
   }
 
   Future<void> _connectSocket() async {
@@ -76,7 +76,7 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
             child: CircularProgressIndicator(),
           );
         } else if (state is FriendRequestSuccess) {
-          return _buildFriendListWidget(context, state.friendRequests, state);
+          return _buildFriendListWidget(context, state.friendRequests);
         } else if (state is FriendFailure) {
           return Center(
             child: Text(state.errorMessage),
@@ -87,8 +87,8 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
     );
   }
 
-  Widget _buildFriendListWidget(BuildContext context,
-      List<FriendRequestEntity> friendRequests, FriendState state) {
+  Widget _buildFriendListWidget(
+      BuildContext context, List<FriendRequestEntity> friendRequests) {
     return ListView.builder(
         itemCount: friendRequests.length,
         itemBuilder: (context, index) {
@@ -110,13 +110,12 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
                     ElevatedButton(
                         onPressed: () {
                           _updateFriendRequest(firend.userId, 'Accepted');
-                          if (state is FriendSuccess) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(state.message),
-                              ),
-                            );
-                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('arkadaşlık isteği kabul edildi'),
+                            ),
+                          );
                         },
                         child: Text('Accept')),
                     SizedBox(
@@ -125,13 +124,12 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
                     ElevatedButton(
                         onPressed: () {
                           _updateFriendRequest(firend.userId, 'Rejected');
-                          if (state is FriendSuccess) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(state.message),
-                              ),
-                            );
-                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('reddedildi'),
+                            ),
+                          );
                         },
                         child: Text('Decline'))
                   ],
@@ -140,40 +138,3 @@ class _FriendRequestPageState extends State<FriendRequestPage> {
         });
   }
 }
-
-// Widget _buildMessageTile(String userName, String requestMessage, String time) {
-//   return Column(children: [
-//     Padding(padding: EdgeInsets.symmetric(vertical: 10)),
-//     ListTile(
-//       contentPadding: EdgeInsets.symmetric(horizontal: 20),
-//       leading: CircleAvatar(
-//         radius: 30,
-//         backgroundImage: NetworkImage("https://via.placeholder.com/150"),
-//       ),
-//       title: Text(
-//         userName,
-//         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-//       ),
-//       subtitle: Text(
-//         requestMessage,
-//         style: TextStyle(color: Colors.grey),
-//         overflow: TextOverflow.ellipsis,
-//       ),
-//       trailing: Text(
-//         time,
-//         style: TextStyle(color: Colors.grey),
-//       ),
-//     ),
-//     Padding(
-//         padding: EdgeInsets.symmetric(horizontal: 20),
-//         child: Row(
-//           children: [
-//             ElevatedButton(onPressed: () {}, child: Text('Accept')),
-//             SizedBox(
-//               width: 10,
-//             ),
-//             ElevatedButton(onPressed: () {}, child: Text('Decline'))
-//           ],
-//         ))
-//   ]);
-// }

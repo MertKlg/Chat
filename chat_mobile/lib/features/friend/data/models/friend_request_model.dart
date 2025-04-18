@@ -5,13 +5,15 @@ class FriendRequestModel extends FriendRequestEntity {
     required super.userId,
     required super.username,
     required super.email,
+    required super.photo,
   });
 
   factory FriendRequestModel.fromJson(Map<String, dynamic> json) {
     return FriendRequestModel(
-      userId: json['users_id'],
+      userId: json['user_id'],
       username: json['username'],
       email: json['email'],
+      photo: json['photo'],
     );
   }
 }

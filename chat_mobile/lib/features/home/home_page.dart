@@ -1,7 +1,6 @@
-import 'package:chat_android/chat_page.dart';
-
 import 'package:chat_android/features/friend/presentation/pages/friend_management_page.dart';
 import 'package:chat_android/features/profile/presentation/pages/profile_page.dart';
+import 'package:chat_android/features/chat/presentation/pages/message_page.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,7 +14,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   // Sayfaları tanımlıyoruz
   final List<Widget> _pages = [
-    ChatPage(),
+    MessagePage(),
     FriendManagementPage(),
     ProfilePage()
   ];
@@ -31,9 +30,9 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: _pages[_selectedIndex], // Seçili sayfayı göster
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.transparent,
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Colors.blue, // Seçili olan simge rengi
+        onTap: _onItemTapped, // Seçili olan simge rengi
         unselectedItemColor: Colors.grey, // Seçili olmayan simge rengi
         items: [
           BottomNavigationBarItem(

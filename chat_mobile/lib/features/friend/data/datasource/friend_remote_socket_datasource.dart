@@ -32,6 +32,7 @@ class FriendRemoteSocketDatasource {
       return false;
     }
     log(_baseUrl!);
+    log('token $token');
     try {
       _socket = io.io(
           _baseUrl,
@@ -149,6 +150,7 @@ class FriendRemoteSocketDatasource {
               BaseResponseModel.fromJson(
                   data, (json) => FriendRequestModel.fromJson(json));
           if (responseModel.status == 200) {
+            log('responsemodel ${responseModel.data}');
             completer.complete(responseModel);
           } else {
             completer.completeError(Exception(responseModel.message));
@@ -177,7 +179,7 @@ class FriendRemoteSocketDatasource {
 
     log('👫 Arkadaşlık isteği gönderildi: $receiverId');
 
-    _socket?.on('friend_request_result', (data) {
+    _socket?.once('friend_request_result', (data) {
       _socket?.off('search_friend_result');
       if (data != null && data is Map<String, dynamic>) {
         try {
@@ -215,11 +217,11 @@ class FriendRemoteSocketDatasource {
 
     Completer<BaseResponseModel<SearchFriendModels>> completer = Completer();
 
-    _socket?.emit('search_friend', {'username': username});
+    _socket?.emit('search_user', {'username': username});
 
-    _socket?.on('search_friend_result', (data) {
-      _socket?.off('search_friend_result');
-      log('search_friend_result event received in datasource: $data');
+    _socket?.on('search_user_result', (data) {
+      _socket?.off('search_user_result');
+      log('search_user_result event received in datasource: $data');
 
       if (data != null && data is Map<String, dynamic>) {
         try {

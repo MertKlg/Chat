@@ -1,11 +1,9 @@
 import 'package:chat_android/core/constant/storage_keys.dart';
-import 'package:chat_android/features/auth/data/models/token_model.dart';
 import 'package:chat_android/features/auth/domain/entities/token_entity.dart';
 import 'package:chat_android/features/auth/domain/usecasses/login_use_case.dart';
 import 'package:chat_android/features/auth/domain/usecasses/register_use_case.dart';
 import 'package:chat_android/features/auth/presentation/bloc/auth_event.dart';
 import 'package:chat_android/features/auth/presentation/bloc/auth_satate.dart';
-import 'package:chat_android/services/socket_services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:developer';
