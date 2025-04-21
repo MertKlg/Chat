@@ -1,7 +1,7 @@
 enum FriendStatus{
     "Waiting" = "Waiting",
     "Accepted" = "Accepted",
-    "Rejected" = "Rejected"
+    "Rejected" = "Rejected",
 }
 
 

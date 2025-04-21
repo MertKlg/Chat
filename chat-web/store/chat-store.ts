@@ -7,7 +7,8 @@ interface IChat {
     username: string,
     photo: string,
     message: string,
-    chat_id: string
+    chat_id: string,
+    chat_type : string
 }
 
 
@@ -15,12 +16,15 @@ export const chatStore = defineStore("chatStore", () => {
 
     const { $socket } = useNuxtApp()
 
-    const chats = reactive<{privateChat : IChat[], groupChats : IGroupChat[]}>({privateChat : [], groupChats : []})
+    const chats = reactive<{ privateChat : IChat[], groupChats : IGroupChat[] }>({privateChat : [], groupChats : []})
     
     const get_group_chats_result = (response : any) => {
         try {
             const res = response as IResponse
             const chatResponse = res.value as IGroupChat[]
+
+            console.log(response)
+            console.log(chatResponse)
 
             if (chats.groupChats.length <= 0) {
                 chats.groupChats.push(...chatResponse)
@@ -33,7 +37,7 @@ export const chatStore = defineStore("chatStore", () => {
                 return
             }
 
-            chats.groupChats.find(e => e.group_id == findRelatedChat.group_id)!.group_name = findRelatedChat.group_name
+            chats.groupChats.find(e => e.group_id == findRelatedChat.group_id)!.message = findRelatedChat.message
             
         } catch (e) {
             console.error(e)

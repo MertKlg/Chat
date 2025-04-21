@@ -1,9 +1,9 @@
 import { Server } from "socket.io";
 import { socketVerifyUser } from "./middleware/socket-verify-user";
 import { webSocketAccessTokenVerify } from "./middleware/socket-token-verify";
-import friendSocket from "./friend-socket";
-import chatSocket from "./chat-socket";
-import chatGroupSocket from "./chat-group-socket";
+import friendSocket from "./events/friend-socket";
+import chatSocket from "./events/chat-socket";
+import chatGroupSocket from "./events/chat-group-socket";
 
 
 const appSocket = (io : Server) => {
@@ -14,11 +14,12 @@ const appSocket = (io : Server) => {
         const {user_id} = socket.data.user
         socket.join(user_id)
 
-        friendSocket(socket, io)
-        chatSocket(socket, io)
-        chatGroupSocket(socket,io)
+        friendSocket(socket)
+        chatSocket(socket)
+        chatGroupSocket(socket)
 
         socket.on('disconnect', () => {
+          socket.leave(user_id)
         });
       });
 }

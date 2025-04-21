@@ -16,7 +16,8 @@ type Credentials = "same-origin" | "include" | "omit";
 type Methods = "GET" | "PUT" | "POST" | "DELETE";
 
 async function genericFetch(fetch: IFetch): Promise<IResponse> {
-  const auth = authStore();
+  try{
+    const auth = authStore();
   
   const { data, error } = await useFetch(fetch.url, {
     body: fetch.body ?? null,
@@ -25,26 +26,30 @@ async function genericFetch(fetch: IFetch): Promise<IResponse> {
     immediate: fetch.immediate,
   });
 
+
   if (error.value) {
     const res = error.value.data as IResponse;
 
-    // 401 hatasında refresh yapıp tekrar deneyelim
     if (res.status === 401) {
       const refreshRes = await auth.refresh();
       if (refreshRes.status !== 200) {
-        throw refreshRes;
+        return Promise.reject(refreshRes)
       }
-      // Sonsuz döngüyü önlemek için refresh sonrası hata alınıyorsa döngü kesilebilir.
-      return genericFetch(fetch);
+      window.location.reload()
+      return Promise.reject(res)
     }
     
-    // Diğer hatalarda, hatayı fırlatıyoruz
-    throw res;
+    return Promise.reject(res)
   }
 
-  // Veri geldiyse
   const res = data.value as IResponse;
-  return res;
+  return Promise.resolve(res);
+  }catch(e){
+    if(e instanceof ResponseModel){
+      return Promise.reject(e)
+    }
+    return Promise.reject({message : "Something went wrong", status : 500} as IResponse)
+  }
 }
 
 

@@ -4,5 +4,6 @@ export default interface IGroupChat{
     chat_id : string,
     created_at : Date,
     photo : string,
-    message : string
+    message : string,
+    chat_type : string
 }

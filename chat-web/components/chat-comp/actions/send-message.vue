@@ -42,6 +42,7 @@
 
 <script setup lang="ts"> 
 import { ref } from "vue"
+import { MessageTypes } from "~/model/enum/emessage-types";
 import type IResponse from "~/model/interfaces/iresponse";
 import toastStore from "~/store/toast-store";
 const props = defineProps(["chat_info"])
@@ -55,14 +56,14 @@ const toast = toastStore()
 
 const sendMessage = () => {
   if (!newMessage.value.trim()) return;
-  const { chat_id } = props.chat_info
-  $socket.emit("send_chat_message", { chat_id: chat_id, message: newMessage.value })
+  const { chat_id, chat_type} = props.chat_info
+  $socket.emit("send_chat_message", { chat_id: chat_id, message: newMessage.value, message_type : MessageTypes.text, chat_type : chat_type })
 }
 
 
 const sendImage = async () => {
   try {
-    const { chat_id } = props.chat_info
+    const { chat_id, chat_type } = props.chat_info
     if (isUploading.value) return;
     isUploading.value = true;
 
@@ -108,8 +109,8 @@ const sendImage = async () => {
     }
 
     toast.warning({ title: 'Uploading image...', description: 'Please wait' });
-
-    $socket.emit("send_chat_image", { chat_id: chat_id, images: validImages });
+    // Image
+    $socket.emit("send_chat_message", { chat_id: chat_id, images: validImages,  message_type : MessageTypes.image, chat_type : chat_type });
   } catch (e) {
     console.error("Error sending image:", e);
     toast.error({ title: 'Failed to send image', description: 'Please try again' });
@@ -185,30 +186,9 @@ const send_chat_message_result = (response : any) => {
   }
 }
 
-const send_chat_image_result = (response : any) => {
-  try {
-    const res = response as IResponse;
-    isUploading.value = false;
-
-    if (res.status == 200) {
-      toast.success({ title: 'Image sent successfully', description: '' });
-      selectedFiles.value = null;
-      newMessage.value = ""
-
-    } else {
-      toast.error({ title: 'Failed to send image', description: res.message || 'Please try again' });
-    }
-
-  } catch (e) {
-    isUploading.value = false;
-    console.error("Error processing image upload response:", e);
-    toast.error({ title: 'Error processing upload', description: 'Please try again' });
-  }
-}
 
 
 $socket.on("send_chat_message_result", send_chat_message_result)
-$socket.on("send_chat_image_result", send_chat_image_result)
 
 </script>
 

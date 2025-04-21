@@ -9,6 +9,7 @@ import "./service/database"
 import { Server } from 'socket.io'
 import cors from "cors"
 import appSocket from './api/v1/sockets'
+import { setSocketInstanse } from './api/v1/sockets/socket-instanse'
 
 const port = 8080
 const app = express()
@@ -22,8 +23,7 @@ const io = new Server(server, {
         credentials : true,
     }
 })
-
-
+setSocketInstanse(io)
 
 app.use(cors({
     origin : ["http://localhost:3000","http://localhost:3001","http://localhost:3002"],

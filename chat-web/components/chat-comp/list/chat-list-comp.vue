@@ -83,8 +83,9 @@ import type IMessages from '~/model/interfaces/imessages'
 import {ref} from "vue"
 import toastStore from '~/store/toast-store';
 import type IResponse from '~/model/interfaces/iresponse';
+import { MessageTypes } from '~/model/enum/emessage-types';
 
-const props = defineProps(["chat_messages","seemedMessage","chat_info" ,"profile"])
+const props = defineProps(["chat_messages","seemedMessage","chat_info" ,"profile", "chat_type"])
 const config = useRuntimeConfig()
 const { $socket } = useNuxtApp();
 const toast = toastStore()
@@ -96,7 +97,7 @@ const messages = props.chat_messages as IMessages[]
 
 const deleteMessage = (chat_message_id: string) => {
   if (confirm("Are you sure delete this message ?")) {
-    $socket.emit("delete_chat_message", { chat_message_id: chat_message_id, chat_id: props.chat_info.chat_id })
+    $socket.emit("send_chat_message", { chat_message_id: chat_message_id, chat_id: props.chat_info.chat_id, message_type : MessageTypes.delete, chat_type : props.chat_type })
   }
 }
 
@@ -106,7 +107,7 @@ const editMessage = (chat_message_id: string, oldMessage: string) => {
     updateMessageChatId.value = chat_message_id
     newUpdateChatMessage.value = oldMessage
   } else if (newUpdateChatMessage.value != oldMessage) {
-    $socket.emit("edit_chat_message", { chat_message_id: chat_message_id, message: newUpdateChatMessage.value, chat_id: props.chat_info.chat_id })
+    $socket.emit("send_chat_message", { chat_message_id: chat_message_id, message: newUpdateChatMessage.value, chat_id: props.chat_info.chat_id, message_type : MessageTypes.edit, chat_type : props.chat_type })
   } else {
     updateMessageChatId.value = ""
     newUpdateChatMessage.value = ""

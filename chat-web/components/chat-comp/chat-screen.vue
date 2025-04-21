@@ -154,6 +154,9 @@ const messages = ref<IMessages[]>([])
 const seemedMessage = ref<ISeemedMessage[]>([])
 const config = useRuntimeConfig()
 
+
+console.log(props)
+
 /* JS */
 const scrollMessages = () => {
   const getMessagesElement = document.getElementById("chat-messages")

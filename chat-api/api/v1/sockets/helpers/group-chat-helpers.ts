@@ -45,6 +45,7 @@ export const getGroups = async (user_id: string) => {
   cg.created_at,
   bin_to_uuid(ct.chat_id) AS chat_id,
   cg.photo AS photo,
+  ct.chat_type,
   (
     SELECT cmes.message
     FROM chat_messages cmes
@@ -68,4 +69,57 @@ WHERE
   
     return groupMessages
 };
-  
+
+
+
+
+export const getLastGroupChatMessage = async (chat_id : string, user_id : string, beforeDate? : string, limit : number = 1) => {
+  try{
+    const getConn = await databasePool.getConnection()
+    await getConn.beginTransaction()
+
+     const result = (await getConn.query(`SELECT
+      u.user_id AS user_id,
+      u.username,
+      m.message,
+      BIN_TO_UUID(m.chat_message_id) AS chat_message_id,
+      m.sended_at,
+      BIN_TO_UUID(m.chat_id) AS chat_id,
+      ct.chat_type,
+      cg.group_name,
+      bin_to_uuid(cg.group_id) as group_id,
+      CASE
+          WHEN m.chat_image IS NOT NULL THEN CONCAT('/storage/', BIN_TO_UUID(m.chat_id), '/', m.chat_image)
+          ELSE NULL
+      END AS chat_image,
+      CASE
+          WHEN cg.photo IS NOT NULL THEN CONCAT('/storage/', BIN_TO_UUID(m.chat_id), '/', cg.photo)
+          ELSE '/storage/defaults/default_group_image.png'
+      END AS photo
+  FROM
+      chat_messages m
+  INNER JOIN
+      users u ON u.user_id = m.user_id
+  INNER JOIN
+      chat_table ct ON ct.chat_id = m.chat_id AND ct.chat_type = 'Group'
+  INNER JOIN
+      chat_group cg ON cg.chat_id = ct.chat_id
+  WHERE
+      BIN_TO_UUID(m.chat_id) = ?
+      AND m.chat_id IN (
+          SELECT chat_id FROM chat_members WHERE user_id = ?
+      )
+      AND (? IS NULL OR m.sended_at < ?)
+  ORDER BY
+      m.sended_at DESC
+  LIMIT ?;
+  `, [chat_id, user_id, beforeDate, beforeDate, limit]))[0] as IGroupChat[]
+
+  await getConn.commit()
+
+  return result
+  }catch(e){
+    if(e instanceof Error) return e
+    return Error("Something went wrong")
+  }
+}

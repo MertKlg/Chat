@@ -23,7 +23,7 @@
       <div class="flex-grow-1 overflow-auto p-2">
         <ul class="list-group">
           <li class="list-group-item list-group-item-action" style="cursor: pointer;" v-for="chat in chat.chats.privateChat"
-            @click="changeComp(ChatScreen, { chat_id: chat.chat_id, title: chat.username, photo: chat.photo })" :key="chat.chat_id">
+            @click="changeComp(ChatScreen, { chat_id: chat.chat_id, title: chat.username, photo: chat.photo, chat_type : chat.chat_type })" :key="chat.chat_id">
             <div>
               <div class="d-flex align-items-center">
                 <img :src="config.public.BASE_URL + chat.photo" style="
@@ -44,7 +44,7 @@
           <li class="list-group-item list-group-item-action"
            style="cursor: pointer;"
             v-for="chat in chat.chats.groupChats"
-            @click="changeComp(ChatScreen, { chat_id: chat.chat_id, title : chat.group_name, photo : chat.photo })"
+            @click="changeComp(ChatScreen, { chat_id: chat.chat_id, title : chat.group_name, photo : chat.photo, chat_type : chat.chat_type })"
            :key="chat.group_id">
             <div>
               <div class="d-flex align-items-center">
