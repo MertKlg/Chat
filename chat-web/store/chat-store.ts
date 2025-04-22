@@ -23,8 +23,6 @@ export const chatStore = defineStore("chatStore", () => {
             const res = response as IResponse
             const chatResponse = res.value as IGroupChat[]
 
-            console.log(response)
-            console.log(chatResponse)
 
             if (chats.groupChats.length <= 0) {
                 chats.groupChats.push(...chatResponse)
