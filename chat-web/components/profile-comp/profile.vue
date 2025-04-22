@@ -52,6 +52,8 @@
                             <button class="btn btn-danger mx-1" @click="deleteProfile">
                                 Delete profile
                             </button>
+
+                            <button class="btn btn-warning mx-1 " @click="signOut">Sign out</button>
                         </div>
                     </div>
                 </div>
@@ -69,10 +71,12 @@ import type IResponse from "~/model/interfaces/iresponse";
 import ResponseModel from "~/model/response-model";
 import toastStore from "~/store/toast-store";
 import type IUser from "~/model/interfaces/iuser";
+import authStore from "~/store/auth-store";
 
 const toast = toastStore();
 const profile = profileStore();
 const config = useRuntimeConfig()
+const auth = authStore()
 
 const profileInformation = reactive<{
     user: IUser;
@@ -171,6 +175,17 @@ const onFileChange = (event) => {
 const deleteProfile = async () => {
     if(confirm("Your account will be deleted. Are you sure?")){
         const res = await profile.deleteProfile()
+        toast.sendToastWithResponse(res)
+    }
+}
+
+
+const signOut = async () => {
+    if(confirm("Do you want sign out ?")){
+        const res = await auth.signOut()
+        if(res.status == 200){
+            window.location.reload()
+        }
         toast.sendToastWithResponse(res)
     }
 }

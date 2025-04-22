@@ -35,18 +35,17 @@ async function genericFetch(fetch: IFetch): Promise<IResponse> {
       if (refreshRes.status !== 200) {
         return Promise.reject(refreshRes)
       }
-      window.location.reload()
-      return Promise.reject(res)
     }
-    
-    return Promise.reject(res)
   }
 
   const res = data.value as IResponse;
   return Promise.resolve(res);
   }catch(e){
+
     if(e instanceof ResponseModel){
       return Promise.reject(e)
+    }else if(e instanceof Error){
+      return Promise.reject(new ResponseModel(e.message ?? "Something went wrong", 500))
     }
     return Promise.reject({message : "Something went wrong", status : 500} as IResponse)
   }

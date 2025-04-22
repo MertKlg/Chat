@@ -55,7 +55,7 @@ import ResponseModel from "~/model/response-model";
 const toast = toastStore()
 
 useHead({
-  title : "Sign up"
+  title: "Sign up"
 })
 
 const rePhoneNumber = /^(\+?\d{0,4})?\s?-?\s?(\(?\d{3}\)?)\s?-?\s?(\(?\d{3}\)?)\s?-?\s?(\(?\d{4}\)?)?$/;
@@ -82,34 +82,14 @@ const schema = yup.object({
 });
 
 const onSubmit = async (values: any) => {
-  try{
-    const response = await clientSideFetch({
-        immediate : false,
-        url : `${API_URL}/auth/sign-up`,
-        body : values,
-        credentials : "include",
-        method : "POST"
-      })
+  const response = await clientSideFetch({
+    immediate: false,
+    url: `${API_URL}/auth/sign-up`,
+    body: values,
+    credentials: "include",
+    method: "POST"
+  })
 
-      console.log(response)
-    
-    if(response.status == 200){
-      toast.success({title : response.message , description : ""})
-      return
-    }
-
-    toast.warning({title : response.message, description : ""})
-
-  }catch(e){
-    if(e instanceof ResponseModel){
-      toast.error({title : e.message, description : ""})
-      return
-    }else if(e instanceof Error){
-      toast.error({title : e.message, description : ""})
-      return
-    }
-
-    toast.error({title : "Something went wrong", description : ""})
-  }
+  toast.sendToastWithResponse(response)
 };
 </script>

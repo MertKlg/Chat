@@ -24,7 +24,7 @@ const profileStore = defineStore("profileStore", () => {
                 userProfile.value = res.value[0]
             }
         }catch(e){
-            console.error("Profile store error : ", e)
+            console.error(e)
         }
     }
 

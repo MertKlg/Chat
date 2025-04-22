@@ -1,15 +1,15 @@
 
 <script lang="ts" setup>
-import { API_URL } from '~/common/API';
 import * as yup from 'yup';
 import { Form,Field,ErrorMessage,useForm } from 'vee-validate';
 import toastStore from '~/store/toast-store';
-import type IResponse from '~/model/interfaces/iresponse';
-import { useFetch } from '#app';
+import authStore from '~/store/auth-store';
 
 const toast = toastStore()
-
-
+const auth = authStore()
+useHead({
+    title : "Sign-in Chat"
+})
 
 const schema = yup.object({
   email: yup.string().required("Email required").email("This email does not an validated email address"),
@@ -18,15 +18,11 @@ const schema = yup.object({
 
 
 const onSubmit = async (values : any) => {
-    const {data,error} = await useFetch(`${API_URL}/auth/sign-in`, {body : values, method : "POST", credentials : "include"}) 
-    if(error.value != null){
-        const res = error.value.data as IResponse
-        toast.error({title : res.message, description : ''})
-        return
+    const result = await auth.signIn(values)
+    if(result.status == 200){
+        window.location.reload()
     }
-    const res = data.value as IResponse
-
-    toast.success({title : res.message, description : ''})
+    toast.sendToastWithResponse(result)
 }
 
 </script>

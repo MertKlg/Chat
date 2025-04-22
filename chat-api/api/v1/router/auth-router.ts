@@ -83,8 +83,6 @@ authRouter.post(
     refreshToken
 );
 
-authRouter.post("/sign-in", signIn);
-
 authRouter.post("/sign-out",[ accessTokenVerify, verifyUser ], signOut)
 
 
