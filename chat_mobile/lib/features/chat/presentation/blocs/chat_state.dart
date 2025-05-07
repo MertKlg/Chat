@@ -1,7 +1,11 @@
 import 'package:chat_android/features/chat/domain/entities/get_chat_entity.dart';
 import 'package:chat_android/features/chat/domain/entities/get_last_message_entity.dart';
+import 'package:equatable/equatable.dart';
 
-abstract class ChatState {}
+abstract class ChatState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
 
 class ChatInitial extends ChatState {}
 
@@ -15,12 +19,21 @@ class GetChatsSuccess extends ChatState {
 
 class GetAllMessageSucces extends ChatState {
   final List<GetLastMessageEntity> messageEntity;
-  GetAllMessageSucces({required this.messageEntity});
+
+  GetAllMessageSucces(this.messageEntity);
 }
 
-class GetLastMessageSucces extends ChatState {
-  final GetChatEntity messageEntity;
+class GetLastMessageSucces extends ChatState with EquatableMixin {
+  final List<GetLastMessageEntity> messageEntity;
   GetLastMessageSucces({required this.messageEntity});
+
+  @override
+  List<Object?> get props => [messageEntity];
+}
+
+class MessageDeleteSuccess extends ChatState {
+  final String isDeleted;
+  MessageDeleteSuccess({required this.isDeleted});
 }
 
 class ChatUpdate extends ChatState {
