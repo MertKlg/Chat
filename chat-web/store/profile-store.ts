@@ -1,50 +1,46 @@
 import { API_URL, STORAGE } from "~/common/API"
 import type IResponse from "~/model/interfaces/iresponse"
-import genericFetch, { clientSideFetch } from "~/common/genericFetch"
+import { clientSideFetch, request } from "~/common/genericFetch"
 import type IUser from "~/model/interfaces/iuser"
 import ResponseModel from "~/model/response-model"
+import type { ResultModel } from "~/model/result-model"
 
 const profileStore = defineStore("profileStore", () => {
 
     const userProfile = ref<IUser | undefined>(undefined)
 
-    const getProfile = async () => {
-        try{
-            const res = await genericFetch(
-                {
-                  url:  `${API_URL}/profile/get`,
-                  method : 'GET',
-                  body : undefined,
-                  credentials : "include",
-                  immediate : true
-                }
-            )
-    
-            if(res.status === 200){
-                userProfile.value = res.value[0]
+    const getProfile = async (): Promise<ResultModel<IUser[] | null>> => {
+        const res = await request<IUser>(
+            {
+                url: `/profile/get`,
+                method: "GET",
+                credentials: "include"
             }
-        }catch(e){
-            console.error(e)
+        )
+        if(res.data){
+            userProfile.value = res.data[0]
         }
+        return res
     }
 
-    const deleteProfile = async () : Promise<ResponseModel>  => {
-        try{            
+
+    const deleteProfile = async (): Promise<ResponseModel> => {
+        try {
             const res = await clientSideFetch(
                 {
-                  url:  `${API_URL}/profile/delete`,
-                  method : 'DELETE',
-                  body : undefined,
-                  credentials : "include",
-                  immediate : false
+                    url: `${API_URL}/profile/delete`,
+                    method: 'DELETE',
+                    body: undefined,
+                    credentials: "include",
+                    immediate: false
                 }
             ) as ResponseModel
 
             return res
-        }catch(e){
-            if(e instanceof ResponseModel){
+        } catch (e) {
+            if (e instanceof ResponseModel) {
                 return e
-            }else if(e instanceof Error){
+            } else if (e instanceof Error) {
                 return new ResponseModel(e.message ?? "Something went wrong", 500)
             }
             return new ResponseModel("Something went wrong", 500)

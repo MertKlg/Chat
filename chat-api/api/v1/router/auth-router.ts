@@ -9,7 +9,7 @@ import {
 import inputValidator from "../middleware/input-validator";
 import { check } from "express-validator";
 import ResponseModel from "../model/error-model";
-import errorCodes from "../common/error-codes";
+import errorMessages from "../common/error.messages";
 import uaParserMiddleware from "../middleware/ua-parser";
 import {
     accessTokenVerify,
@@ -22,25 +22,25 @@ const authRouter = Router();
 authRouter.post(
     "/sign-up",
     inputValidator([
-        check("username", errorCodes.USERNAME_EMPTY)
+        check("username", errorMessages.USERNAME.EMPTY)
             .escape()
             .isLength({ min: 3, max: 12 })
-            .withMessage(errorCodes.USERNAME_LENGHT),
+            .withMessage(errorMessages.USERNAME.LENGTH),
 
-        check("email", errorCodes.EMAIL_EMPTY).escape().isEmail(),
+        check("email", errorMessages.EMAIL.ALREADY_USING).escape().isEmail(),
 
         check("phone", "send validate phone number").isMobilePhone("tr-TR"),
 
-        check("password", errorCodes.PASSWORD_WEAK).escape().isStrongPassword(),
+        check("password", errorMessages.PASSWORD.WEAK).escape().isStrongPassword(),
 
-        check("passwordAgain", errorCodes.PASSWORD_WEAK)
+        check("passwordAgain", errorMessages.PASSWORD.WEAK)
             .escape()
             .isStrongPassword()
             .custom(async (confirmPassword, { req }) => {
                 const passwordAgain = confirmPassword as string;
                 const password = req.body.password as string;
                 if (passwordAgain !== password)
-                    throw new ResponseModel(errorCodes.PASSWORDS_NOT_SAME, 400);
+                    throw new ResponseModel(errorMessages.PASSWORD.NOT_SAME, 400);
             }),
     ]),
     signUp
@@ -50,9 +50,12 @@ authRouter.post(
     "/sign-in",
     [
         inputValidator([
-            check("email", errorCodes.EMAIL_NOT_VALIDATED).escape().trim().isEmail(),
+            check("email", errorMessages.EMAIL.NOT_VALIDATED)
+            .escape()
+            .trim()
+            .isEmail(),
 
-            check("password", errorCodes.PASSWORD_WEAK)
+            check("password", errorMessages.PASSWORD.WEAK)
                 .escape()
                 .trim()
                 .isStrongPassword(),
@@ -68,7 +71,7 @@ authRouter.put(
         accessTokenVerify,
         verifyUser,
         inputValidator([
-            check("password", errorCodes.PASSWORD_WEAK)
+            check("password", errorMessages.PASSWORD.WEAK)
                 .escape()
                 .trim()
                 .isStrongPassword(),
@@ -79,7 +82,7 @@ authRouter.put(
 
 authRouter.post(
     "/refresh",
-    [refreshTokenVerify, verifyUser, uaParserMiddleware],
+    [refreshTokenVerify, uaParserMiddleware],
     refreshToken
 );
 

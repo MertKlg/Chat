@@ -9,6 +9,7 @@
 import profileStore from '~/store/profile-store';
 const profile = profileStore()
 
+
 </script>
 
 <style>

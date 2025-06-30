@@ -1,27 +1,22 @@
 import { API_URL } from "~/common/API";
-import { clientSideFetch } from "~/common/genericFetch";
+import { clientSideFetch, request } from "~/common/genericFetch";
 import type IResponse from "~/model/interfaces/iresponse";
+import type ResponseModel from "~/model/response-model";
+import type { ResultModel } from "~/model/result-model";
 
 const authStore = defineStore("authStore", () => {
 
-    async function refresh(): Promise<IResponse> {
-        const { data, error } = await useFetch(`${API_URL}/auth/refresh`, {
-            credentials: "include",
+
+    async function refresh(): Promise<ResultModel<string[] | null>> {
+        const req = await request<string>({
+            url: `/auth/refresh`,
             method: "POST",
-        });
+        })
 
-        console.log("Refresh log : " + data.value)
-        console.log("Refresh error log : " + error.value)
-
-
-        if (error.value != null) {
-            const res = error.value.data as IResponse;
-            return Promise.reject(res);
-        }
-
-        const res = data.value as IResponse;
-        return Promise.resolve(res);
+        return req
     }
+
+
 
     const signOut = async () => await clientSideFetch({ body : "", credentials : "include", method : "POST", url : `${API_URL}/auth/sign-out`, immediate : false })
 

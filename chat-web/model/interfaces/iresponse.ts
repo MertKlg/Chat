@@ -1,5 +1,5 @@
-export default interface IResponse {
+export default interface IResponse{
     message : string,
     status : number,
-    value : any[] 
+    value : any[]
 }

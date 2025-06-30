@@ -5,4 +5,3 @@ export interface IFriend {
     status : string,
     created_at : string
 }
-

@@ -8,7 +8,7 @@ interface IChat {
     photo: string,
     message: string,
     chat_id: string,
-    chat_type : string
+    chat_type: string
 }
 
 
@@ -16,9 +16,9 @@ export const chatStore = defineStore("chatStore", () => {
 
     const { $socket } = useNuxtApp()
 
-    const chats = reactive<{ privateChat : IChat[], groupChats : IGroupChat[] }>({privateChat : [], groupChats : []})
-    
-    const get_group_chats_result = (response : any) => {
+    const chats = reactive<{ privateChat: IChat[], groupChats: IGroupChat[] }>({ privateChat: [], groupChats: [] })
+
+    const get_group_chats_result = (response: any) => {
         try {
             const res = response as IResponse
             const chatResponse = res.value as IGroupChat[]
@@ -36,13 +36,13 @@ export const chatStore = defineStore("chatStore", () => {
             }
 
             chats.groupChats.find(e => e.group_id == findRelatedChat.group_id)!.message = findRelatedChat.message
-            
+
         } catch (e) {
             console.error(e)
         }
     }
 
-    const get_chats_result = (response : any) => {
+    const get_chats_result = (response: any) => {
         try {
             const res = response as IResponse
             const chatResponse = res.value as IChat[]
@@ -64,22 +64,23 @@ export const chatStore = defineStore("chatStore", () => {
         }
     }
 
-    const checkChat = (userId : number | undefined) : number | undefined => {
-        if(!userId) return
+    const checkChat = (userId: number | undefined): number | undefined => {
+        if (!userId) return
 
         const findFriend = chats.privateChat.find(e => e.user_id == userId)?.user_id
         return findFriend
     }
 
     const emitChat = () => {
-        closeListens()
-
         $socket.emit("get_chats")
         $socket.emit("get_group_chats")
+    }
 
+    const listeners = () => {
         $socket.on("get_chats_result", get_chats_result)
         $socket.on("get_group_chats_result", get_group_chats_result)
     }
+
 
     const closeListens = () => {
         $socket.off("get_chats_result")
@@ -89,6 +90,6 @@ export const chatStore = defineStore("chatStore", () => {
 
     const refreshChat = () => emitChat()
 
-    
-    return { chats, refreshChat, checkChat, emitChat}
+
+    return { chats, refreshChat, checkChat, emitChat, closeListens, listeners }
 })

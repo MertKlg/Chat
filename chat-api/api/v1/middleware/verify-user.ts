@@ -1,26 +1,20 @@
-import databasePool from "../../../service/database";
-import errorCodes from "../common/error-codes";
+import errorMessages from "../common/error.messages";
 import { genericFunc } from "../common/generic-func";
+import { findUserById } from "../model/auth/auth.model";
 import ResponseModel from "../model/error-model";
-import IUser from "../model/interface/iuser";
 
 
 export const verifyUser = genericFunc(async (req,res,next) => {
-    const {email} = res.locals
-    if(!email)
-        throw new ResponseModel(errorCodes.EMAIL_NOT_VALIDATED, 400)
+    const { user_id } = res.locals.user
 
-    const user = await databasePool.query("SELECT `user_id`,`email`,`phone`,`username` FROM users WHERE email = ?", [email])
+    if(!user_id)
+        throw new ResponseModel(errorMessages.USER.NOT_FOUNDED, 404)
+
+    const user = await findUserById(user_id)
     
-    if(user.length < 0)
-        throw new ResponseModel(errorCodes.USER_NOT_FOUND, 400)
+    if(!user.data || user.error)
+        throw new ResponseModel(errorMessages.USER.NOT_FOUNDED, 404)
 
-    const convertType = user[0] as IUser[]
-  
-    res.locals.user = {
-        user_id : convertType[0].user_id
-    }
-
-
+    res.locals.user = user.data
     next()
 })

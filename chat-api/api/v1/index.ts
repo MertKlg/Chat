@@ -7,6 +7,4 @@ const v1Router = Router()
 v1Router.use("/auth", authRouter)
 v1Router.use("/profile", profileRouter)
 
-v1Router.use(errorHandler)
-
 export default v1Router

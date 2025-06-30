@@ -1,17 +1,15 @@
-import { Request,Response,NextFunction } from "express";
-import { genericFunc, genericErrorHandler } from "../common/generic-func";
+import { NextFunction, Response, Request } from "express";
 import ResponseModel from "../model/error-model";
+import errorMessages from "../common/error.messages";
 
-
-const errorHandler = genericErrorHandler((err,req, res, next) => {
-
-    if(err instanceof ResponseModel){
-        return res.status(err.status).json(err)
+const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof ResponseModel) {
+        res.status(err.status || 500).json(err);
+        return
     }
 
-    res.status(500).json(new ResponseModel(err.message, 500))
-})
-
-
+    res.status(500).json(new ResponseModel(errorMessages.GENERAL.SOMETHING_WENT_WRONG, 500));
+    return
+};
 
 export default errorHandler

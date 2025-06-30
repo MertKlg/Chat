@@ -110,11 +110,6 @@ const changeComp = (component: any, props: {} = {}) => {
   emit("compChanged", component, props)
 }
 
-
-onMounted(() => {
-  chat.emitChat()
-})
-
 </script>
 
 <style scoped>

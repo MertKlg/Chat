@@ -3,7 +3,7 @@ import { accessTokenVerify } from "../middleware/token-verify";
 import { verifyUser } from "../middleware/verify-user";
 import { deleteProfile, getProfile, updateProfile, updateProfilePhoto } from "../controller/profile-controller";
 import uaParserMiddleware from "../middleware/ua-parser";
-import errorCodes from "../common/error-codes";
+import errorCodes from "../common/error.messages";
 import { check } from "express-validator";
 import inputValidator from "../middleware/input-validator";
 import imageStorage from "../../../service/image-storage";
@@ -11,9 +11,8 @@ import imageStorage from "../../../service/image-storage";
 const profileRouter = Router()
 
 profileRouter.get("/get",[
-    uaParserMiddleware,
     accessTokenVerify,
-    verifyUser
+    uaParserMiddleware
 ], getProfile )
 
 profileRouter.put(
@@ -26,7 +25,7 @@ profileRouter.put(
                 .optional()
                 .not()
                 .isEmpty()
-                .withMessage(errorCodes.USERNAME_EMPTY)
+                .withMessage(errorCodes.USERNAME.EMPTY)
                 .escape()
                 .trim(),
 
@@ -34,9 +33,9 @@ profileRouter.put(
             .optional()
                 .not()
                 .isEmpty()
-                .withMessage(errorCodes.EMAIL_EMPTY)
+                .withMessage(errorCodes.EMAIL.EMPTY)
                 .isEmail()
-                .withMessage(errorCodes.EMAIL_NOT_VALIDATED)
+                .withMessage(errorCodes.EMAIL.NOT_VALIDATED)
                 .escape()
                 .trim(),
 
@@ -44,9 +43,9 @@ profileRouter.put(
             .optional()
                 .not()
                 .isEmpty()
-                .withMessage(errorCodes.PHONE_EMPTY)
+                .withMessage(errorCodes.PHONE.EMPTY)
                 .isMobilePhone("tr-TR")
-                .withMessage(errorCodes.PHONE_NOT_VALIDATED)
+                .withMessage(errorCodes.PHONE.NOT_VALIDATED)
                 .escape()
                 .trim(),
         ]),

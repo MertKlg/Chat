@@ -50,7 +50,7 @@ import { Form, Field, ErrorMessage, useForm } from 'vee-validate';
 import { API_URL } from "~/common/API";
 import toastStore from "~/store/toast-store";
 import type IResponse from "~/model/interfaces/iresponse";
-import genericFetch, { clientSideFetch } from "~/common/genericFetch";
+import genericFetch, { clientSideFetch, request } from "~/common/genericFetch";
 import ResponseModel from "~/model/response-model";
 const toast = toastStore()
 
@@ -82,14 +82,17 @@ const schema = yup.object({
 });
 
 const onSubmit = async (values: any) => {
-  const response = await clientSideFetch({
-    immediate: false,
-    url: `${API_URL}/auth/sign-up`,
+  const response = await request({
+    url: `/auth/sign-up`,
     body: values,
-    credentials: "include",
     method: "POST"
   })
 
-  toast.sendToastWithResponse(response)
+  if(response.error){
+    toast.error({ title : "Failed", description : response.error.message })
+    return
+  }
+
+  toast.success({title : "Success", description : "Your account successfully created"})
 };
 </script>

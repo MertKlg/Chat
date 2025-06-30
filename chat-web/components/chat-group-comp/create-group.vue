@@ -19,13 +19,13 @@
                         <ul class="list-unstyled d-flex">
                             <li v-for="item in members" :key="item.user_id">
                                 <div>
-                                        <img :src="config.public.BASE_URL + item.photo" class="rounded-circle me-2"
-                                            style="width: 20px; height: 20px; object-fit: cover;" />
-                                    </div>
+                                    <img :src="config.public.BASE_URL + item.photo" class="rounded-circle me-2"
+                                        style="width: 20px; height: 20px; object-fit: cover;" />
+                                </div>
                             </li>
                         </ul>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="groupMembers" class="form-label">Add Members</label>
                         <div class="input-group">
@@ -54,7 +54,8 @@
                         </ul>
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100" :disabled="groupName.length < 1 || members.length < 1">Create group</button>
+                    <button type="submit" class="btn btn-success w-100"
+                        :disabled="groupName.length < 1 || members.length < 1">Create group</button>
                 </form>
             </div>
         </div>
@@ -62,6 +63,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { IFriend } from '~/model/friend-model'
 import type IResponse from '~/model/interfaces/iresponse'
 import type IUser from '~/model/interfaces/iuser'
 import toastStore from '~/store/toast-store'
@@ -72,16 +74,25 @@ const config = useRuntimeConfig()
 const toast = toastStore()
 const { $socket } = useNuxtApp()
 const objects = reactive<{
-    searchedFriends: IUser[]
+    searchedFriends: IFriend[]
 }>({ searchedFriends: [] })
 
-const members = ref<IUser[]>([])
+const members = ref<IFriend[]>([])
+
+const listeners = () => {
+    $socket.on("search_user_result", search_user_result)
+    $socket.on("create_group_chat_result", create_group_chat_result)
+}
+
+onMounted(() => {
+    listeners()
+})
 
 const searchQuery = () => {
     $socket.emit("search_user", { username: search.value.trim() })
 }
 
-const addMember = (user: IUser) => {
+const addMember = (user: IFriend) => {
     members.value.push(user)
 }
 
@@ -90,27 +101,26 @@ const createGroup = () => {
 }
 
 
-const search_user_result = (response : any) => {
-    try{
+const search_user_result = (response: any) => {
+    try {
         const res = response as IResponse
-        
-        const toUser = res.value as IUser[]
+        console.log(res.value)
+        const toUser = res.value as IFriend[]
         objects.searchedFriends = toUser.filter(user => !members.value.some(member => member.user_id === user.user_id))
-    }catch(e){
+    } catch (e) {
         console.error(e)
     }
 }
 
-const create_group_chat_result = (response : any) => {
-    try{
+const create_group_chat_result = (response: any) => {
+    try {
         const res = response as IResponse
 
         toast.sendToastWithResponse(res)
-    }catch(e){
+    } catch (e) {
         console.error(e)
     }
 }
 
-$socket.on("search_user_result", search_user_result)
-$socket.on("create_group_chat_result", create_group_chat_result)
+
 </script>

@@ -1,149 +1,153 @@
-import errorCodes from "../common/error-codes";
+import ErrorMessages from "../common/error.messages";
 import { genericFunc } from "../common/generic-func";
 import ResponseModel from "../model/error-model";
-import IUser from "../model/interface/iuser";
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
-import databasePool from "../../../service/database";
 import { DeviceTypes } from "../model/types/device-types";
 import ProfileStatus from "../model/types/profile-status";
-import { NextFunction } from "express";
+import { findUserByEmail, findUserById, findUserPasswordById, signUpUser, updatePassword } from "../model/auth/auth.model";
+import { compare, hash } from "../common/hash.pass";
+import errorMessages from "../common/error.messages";
+import { generateToken } from "../common/jwt";
+import { IUser } from "../model/auth/auth.interface";
 
-export const signUp = genericFunc(async(req,res,next) => {
-    const {username,email,password,phone} = req.body
+export const signUp = genericFunc(async (req, res, next) => {
+    const { username, email, password, phone } = req.body
 
-    const result = (await databasePool.query("select lower(username) as username , lower(email) as email, lower(phone) as phone from users where email = lower(?) or phone = lower(?)", [email,phone]))[0] as IUser[]
-    if(result.length > 0){
-        const message = (`${username}`.trim().toLowerCase().match(result[0].username.trim().toLowerCase())) ? errorCodes.USERNAME_ALREADY_USING :
-        (`${email}`.trim().toLowerCase().match(result[0].email.trim().toLowerCase())) ? errorCodes.EMAIL_ALREADY_USING : 
-        (`${phone}`.trim().toLowerCase().match(result[0].phone.trim().toLowerCase())) ? errorCodes.PHONE_ALREADY_EXISTS : "Something went wrong"
+    const findUser = await findUserByEmail({ params: [email] })
 
-        if(message.length > 0)
-          throw new ResponseModel(message, 400)
+    if(findUser.data){
+        throw new ResponseModel(ErrorMessages.EMAIL.ALREADY_USING, 400)
     }
 
-    const hashPass = await bcrypt.hash(password, parseInt(`${process.env.SALT_ROUND}`))
+    const hashPass = await hash(password)
 
-    await databasePool.query("insert into users (username,email,password,phone,photo) values(?,?,?,?,?)",[username,email,hashPass,phone, 'default_profile_image.png'])
-    res.json(new ResponseModel(errorCodes.SUCCESS, 200))
+    if (!hashPass.data || hashPass.error) {
+        throw new ResponseModel(ErrorMessages.GENERAL.SOMETHING_WENT_WRONG, 500)
+    }
+
+    const result = await signUpUser({ params: [username, email, hashPass.data, phone, '/storage/default/default_profile_image.png'] })
+
+    if (result.error) {
+        throw new ResponseModel(errorMessages.GENERAL.SOMETHING_WENT_WRONG, 500)
+    }
+
+    res.json(new ResponseModel(ErrorMessages.GENERAL.SUCCESS, 200))
 })
 
 
+export const signIn = genericFunc(async (req, res, next) => {
 
-export const signIn = genericFunc(async (req,res,next) => {
+    const { email, password } = req.body
+    const { device, browser, audience } = res.locals
 
-    const {email,password} = req.body
-    const { device,browser,audience } = res.locals
-    
-    if (!device && !browser) {
-        throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500);
-    }
+    const user = await findUserByEmail({ params: [email] })
 
-    const user = (await databasePool.query(`select users.email, users.password from users where email = ?`,[email]))[0] as IUser[]
-    
-    if(user.length <= 0)
-        throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
+    if (!user.data || user.error || user.data.is_active == ProfileStatus.DEACTIVE)
+        throw new ResponseModel(ErrorMessages.USER.NOT_FOUNDED, 404)
 
-    if(user[0].is_active == ProfileStatus.DEACTIVE){
-        throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
-    }
+    const userPassword = await findUserPasswordById({ params: [user.data.user_id] })
+
+    if (!userPassword.data || userPassword.error)
+        throw new ResponseModel(ErrorMessages.USER.NOT_FOUNDED, 400)
+
+    else if (!userPassword.data.password)
+        throw new ResponseModel(ErrorMessages.AUTH.WRONG_PASSWORD, 400)
+
+    const checkPassword = await compare(password, userPassword.data.password)
+
+    if (!checkPassword.data || checkPassword.error)
+        throw new ResponseModel(checkPassword.error?.message ?? ErrorMessages.AUTH.WRONG_PASSWORD, 400)
 
 
-    const checkPassword = await bcrypt.compare(password, user[0].password)
-
-    if(!checkPassword)
-        throw new ResponseModel(errorCodes.WRONG_PASSWORD,400)
-
-    const { JWT_KEY , JWT_ISS} = process.env as { 
-        JWT_KEY: string; 
-        JWT_ISS : string;
-    };
-
-    if(!JWT_KEY || !JWT_ISS){
-        throw new ResponseModel(errorCodes.SOMETHING_WENT_WRONG, 500)
-    }
-
-    const access_token = jwt.sign({email : user[0].email}, JWT_KEY, { 
-        expiresIn : '1d',
-        subject : user[0].email,
-        issuer : JWT_ISS,
-        audience : audience
+    const access_token = generateToken({
+        payload: { user_id: user.data.user_id },
+        expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
+        subject: user.data.user_id.toString(),
+        audience: audience
     })
 
-    const refresh_token = jwt.sign({email : user[0].email, isRefreshToken : true}, JWT_KEY, { 
-        expiresIn : '30d',
-        subject : user[0].email,
-        issuer : JWT_ISS,
-        audience : audience
+    if (!access_token.data || access_token.error)
+        throw new ResponseModel(access_token.error?.message || ErrorMessages.GENERAL.SOMETHING_WENT_WRONG, 500)
+
+    const refresh_token = generateToken({
+        payload: { user_id: user.data.user_id, isRefreshToken: true },
+        expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
+        subject: user.data.user_id.toString(),
+        audience: audience
     })
 
-    if (device === DeviceTypes.MOBILE || device === DeviceTypes.TABLET || device === DeviceTypes.DESKTOP){
-        res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGNED_IN, 200, [{ access_token, refresh_token }]));
+    if (!refresh_token.data || refresh_token.error)
+        throw new ResponseModel(refresh_token.error?.message || ErrorMessages.GENERAL.SOMETHING_WENT_WRONG, 500)
+
+    if (device === DeviceTypes.MOBILE || device === DeviceTypes.TABLET || device === DeviceTypes.DESKTOP) {
+        res.json(new ResponseModel(ErrorMessages.AUTH.SUCCESSFULLY_SIGNED_IN, 200, [{ access_token, refresh_token }]));
         return
-    } else if(browser){
-        res.cookie("device", audience, { maxAge: 3600 * 1000, httpOnly: true });
-        res.cookie("access_token", access_token, { maxAge: 3600 * 1000, httpOnly: true });
-        res.cookie("refresh_token", refresh_token, { maxAge: (30 * 24 * 60 * 60 * 1000), httpOnly: true });
-        res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGNED_IN, 200));
-    }else {
-        throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500)
+    } else if (browser) {
+        const isDevelopment = process.env.NODE_ENV === "development"
+
+        res.cookie("access_token", access_token.data, { maxAge: Number(process.env.ACCESS_TOKEN_EXPIRES_IN), httpOnly: true, sameSite: isDevelopment ? "lax" : "none", secure: !isDevelopment });
+        res.cookie("refresh_token", refresh_token.data, { maxAge: Number(process.env.REFRESH_TOKEN_EXPIRES_IN), httpOnly: true, sameSite: isDevelopment ? "lax" : "none", secure: !isDevelopment });
+        res.json(new ResponseModel(ErrorMessages.AUTH.SUCCESSFULLY_SIGNED_IN, 200));
+        return
+    } else {
+        throw new ResponseModel(ErrorMessages.GENERAL.UNKNOWN_DEVICE, 500)
     }
 })
-  
 
-export const resetPasssword = genericFunc(async (req,res,next) => {
+
+export const resetPasssword = genericFunc(async (req, res, next) => {
     const { user_id } = res.locals.user
-    const {password} = req.body
+    const { password } = req.body
 
-    const hashNewPass = await bcrypt.hash(password, parseInt(`${process.env.SALT_ROUND}`))
+    const newPassword = await hash(password)
 
-    await databasePool.query("UPDATE `users` SET `password`= ? where user_id = ?",[hashNewPass, user_id])
-    res.json(new ResponseModel(errorCodes.PASSWORD_UPDATED, 200))
+    if (!newPassword.data || newPassword.error)
+        throw new ResponseModel(ErrorMessages.GENERAL.SOMETHING_WENT_WRONG, 500)
+
+    const updatePasswordResult = await updatePassword({ params: [newPassword.data, user_id] })
+
+    if (!updatePasswordResult.data || updatePasswordResult.error)
+        throw new ResponseModel(ErrorMessages.GENERAL.SOMETHING_WENT_WRONG, 500)
+
+    res.json(new ResponseModel(ErrorMessages.PASSWORD.UPDATED, 200))
 })
 
-export const refreshToken = genericFunc(async (req,res,next) => {
-    const { audience,device,browser  } = res.locals
-    const {user_id} = res.locals.user
+export const refreshToken = genericFunc(async (req, res, next) => {
+    const { audience, device, browser } = res.locals
+    const user: IUser = res.locals.user
 
-   
-    const query = await databasePool.query("SELECT `user_id`,`email` FROM `users` WHERE user_id = ?",[user_id])
-    const user = query[0] as IUser[]
+    console.log("Refresh work 1")
 
-    if(user.length < 0)
-        throw new ResponseModel(errorCodes.USER_NOT_FOUND, 404)
-
-    const { JWT_KEY , JWT_ISS} = process.env as { 
-        JWT_KEY: string; 
-        JWT_ISS : string;
-    };
-
-    if(!JWT_KEY || !JWT_ISS){
-        throw new ResponseModel(errorCodes.SOMETHING_WENT_WRONG, 500)
-    }
-
-    const access_token = jwt.sign({email : user[0].email}, JWT_KEY, { 
-        expiresIn : '1d',
-        subject : user[0].email,
-        issuer : JWT_ISS,
-        audience : audience
+    const access_token = generateToken({
+        payload: { user_id: user.user_id },
+        expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
+        subject: user.user_id.toString(),
+        audience: audience,
     })
+    console.log("Refresh work 2")
 
-    if (device === DeviceTypes.MOBILE || device === DeviceTypes.TABLET || device === DeviceTypes.DESKTOP){
-        res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGNED_IN, 200, [{ access_token }]));
+    if (device === DeviceTypes.MOBILE || device === DeviceTypes.TABLET || device === DeviceTypes.DESKTOP) {
+        res.json(new ResponseModel(ErrorMessages.AUTH.SUCCESSFULLY_SIGNED_IN, 200, [{ access_token }]));
         return
-    } else if(browser){
-        res.cookie("access_token", access_token, { maxAge: 3600 * 1000, httpOnly: true });
-        res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGNED_IN, 200));
-    }else {
-        throw new ResponseModel(errorCodes.UNKNOWN_DEVICE, 500)
+    } else if (browser) {
+        const isDevelopment = process.env.NODE_ENV === "development"
+        console.log("Refresh work 3")
+        res.cookie("access_token", access_token.data, {
+            maxAge: Number(process.env.ACCESS_TOKEN_EXPIRES_IN),
+            httpOnly: true,
+            secure: !isDevelopment,
+            sameSite: isDevelopment ? "lax" : "none"
+        });
+        res.json(new ResponseModel(ErrorMessages.AUTH.SUCCESSFULLY_SIGNED_IN, 200));
+        return
+    } else {
+        throw new ResponseModel(ErrorMessages.GENERAL.UNKNOWN_DEVICE, 500)
     }
 
 })
 
 
-export const signOut = genericFunc(async (req ,res ,next) => {
+export const signOut = genericFunc(async (req, res, next) => {
     res.clearCookie("access_token")
     res.clearCookie("refresh_token")
-    res.clearCookie("device")
-    res.json(new ResponseModel(errorCodes.SUCCESSFULLY_SIGN_OUT, 200))
+    res.json(new ResponseModel(ErrorMessages.AUTH.SUCCESSFULLY_SIGNED_IN, 200))
 })

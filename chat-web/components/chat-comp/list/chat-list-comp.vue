@@ -11,7 +11,7 @@
 
           <div v-if="message.user_id !== profile.userProfile?.user_id"
             class="profile-image-container rounded-circle overflow-hidden me-2" style="width: 35px; height: 35px;">
-            <img :src="config.public.BASE_URL + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
+            <img :src="config.public.STORAGE + message.photo" class="profile-image w-100 h-100 object-fit-cover" />
           </div>
 
           <div class="message-box" :class="{
@@ -19,10 +19,11 @@
             'bg-light': message.user_id !== profile.userProfile?.user_id,
             'rounded': true, 'p-3': true, 'message-sent': message.user_id === profile.userProfile?.user_id, 'message-received': message.user_id !== profile.userProfile?.user_id
           }">
-            <div class="message-username fw-bold"
+            <div class="message-username fw-bold my-1"
               :class="{ 'text-end': message.user_id === profile.userProfile?.user_id, 'text-start': message.user_id !== profile.userProfile?.user_id }">
               {{ message.username }}
             </div>
+            
             <div class="message-content">
               <div v-if="message.chat_image">
                 <img :src="config.public.BASE_URL + message.chat_image" class="img-fluid rounded"
@@ -122,6 +123,11 @@ const edit_chat_message_result = (response : any) => {
         updateMessageChatId.value = ""
         newUpdateChatMessage.value = ""
     }
+
+    const getResult = JSON.parse(JSON.stringify(res.value))
+    
+    messages.find(e => e.chat_message_id == getResult.chat_message_id)!.message = getResult.message
+
     toast.sendToastWithResponse(res)
   } catch (e) {
 
@@ -131,9 +137,12 @@ const edit_chat_message_result = (response : any) => {
 const delete_chat_message_result = (response : any) => {
   try {
     const res = response as IResponse
-    if (res.status == 200) {
-      toast.sendToastWithResponse(res)
-    }
+
+    const getChatMessageId = JSON.parse(JSON.stringify(res.value))
+
+    messages.splice(messages.findIndex(e => e.chat_message_id == getChatMessageId.chat_message_id), 1)
+
+    toast.sendToastWithResponse(res)
   } catch (e) {
 
   }

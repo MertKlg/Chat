@@ -1,0 +1,57 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program (app.ts)",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "args": [
+                "${workspaceFolder}/chat-api/app.ts" // Ana TypeScript dosyanız
+            ],
+            "runtimeArgs": [
+                "-r",
+                "ts-node/register/transpile-only"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ],
+            "runtimeExecutable": "/opt/homebrew/bin/node",
+            "env": {
+                // app.ts dosyanızdaki koşula göre NODE_ENV'i ayarlayın
+                "NODE_ENV": "development" 
+            },
+            "cwd": "${workspaceFolder}/chat-api",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Jest Current File",
+            "program": "${workspaceFolder}/chat-api/node_modules/.bin/jest",
+            "args": [
+                "${file}", // O an açık olan test dosyasını çalıştırır
+                "--runInBand", // Testleri seri halde çalıştırır, debug için daha kolaydır
+                "--no-cache",
+                "--watchAll=false" // --watch modunu devre dışı bırakır
+            ],
+            "cwd": "${workspaceFolder}/chat-api", // Projenizin ana dizini
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "runtimeExecutable": "/opt/homebrew/bin/node",
+            "skipFiles": [
+                "<node_internals>/**",
+                "node_modules/**" // node_modules içindeki dosyalarda duraklamayı atlar
+            ],
+            "env": {
+                "NODE_ENV": "test" // Jest için NODE_ENV'i 'test' olarak ayarlar
+            }
+        }
+    ]
+}
