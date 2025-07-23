@@ -1,7 +1,7 @@
-import databasePool from "../../../../service/database"
-import errorMessages from "../../common/error.messages"
-import { addChatMember, createChat } from "../../model/chat/chat.model"
-import { IResult } from "../../model/common/common.interface"
+import databasePool from "../../../service/database"
+import errorMessages from "../common/error.messages"
+import { addChatMember, createChat } from "../model/chat/chat.model"
+import { IResult } from "../model/common/common.interface"
 import { v4 as uuidv4 } from 'uuid';
 
 export const createPersonalChat = async (members: string[]): Promise<IResult<string>> => {

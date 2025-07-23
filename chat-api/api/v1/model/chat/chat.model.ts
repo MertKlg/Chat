@@ -76,7 +76,7 @@ LIMIT ?`,
 
 export const sendChatMessage = async (mQuery: MysqlQuery): Promise<MysqlResult<void>> => {
     return await execute({
-        query: `insert into chat_messages(message, user_id, chat_id) values(?, ?, uuid_to_bin(?))`,
+        query: `insert into chat_messages(chat_message_id, message, user_id, chat_id) values(uuid_to_bin(?),?, ?, uuid_to_bin(?))`,
         params: mQuery.params,
         databasePool: mQuery.databasePool
     })
@@ -84,9 +84,9 @@ export const sendChatMessage = async (mQuery: MysqlQuery): Promise<MysqlResult<v
 
 export const getChatMembers = async (mQuery: MysqlQuery): Promise<MysqlResult<IChatUser[]>> => {
     return await query({
-        query : `SELECT user_id FROM chat_members where chat_id = uuid_to_bin(?)`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        query: `SELECT user_id FROM chat_members where chat_id = uuid_to_bin(?)`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
@@ -114,8 +114,8 @@ export const checkChat = async (mQuery: MysqlQuery): Promise<MysqlResult<IChatCr
     }, chatCreatedRowMapper)
 
     return {
-        data : result.data?.[0],
-        error : result.error
+        data: result.data?.[0],
+        error: result.error
     }
 }
 
@@ -163,65 +163,78 @@ export const getSeemedMessages = async (mQuery: MysqlQuery): Promise<MysqlResult
     })
 }
 
-export const checkOneSeemedMessage = async (mQuery : MysqlQuery) : Promise<MysqlResult<void>> => {
-    return await execute({
-        query : `select chat_message_reads.user_id, users.username, users.photo, seemed_at, bin_to_uuid(chat_message_reads.chat_message_id) chat_message_id from chat_message_reads
+export const checkOneSeemedMessage = async (mQuery: MysqlQuery): Promise<MysqlResult<any>> => {
+    return await query({
+        query: `select chat_message_reads.user_id, users.username, users.photo, seemed_at, bin_to_uuid(chat_message_reads.chat_message_id) chat_message_id from chat_message_reads
  join chat_messages on chat_messages.chat_message_id = chat_message_reads.chat_message_id
  join users on chat_message_reads.user_id = users.user_id
  where chat_message_reads.chat_id = uuid_to_bin(?) and chat_message_reads.chat_message_id = uuid_to_bin(?)`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
 
-export const sendChatImage = async (mQuery : MysqlQuery) : Promise<MysqlResult<void>> => {
+export const sendChatImage = async (mQuery: MysqlQuery): Promise<MysqlResult<void>> => {
     return await execute({
-        query : `insert into chat_messages(chat_image,message,user_id, chat_id) values(?,?,?, uuid_to_bin(?))`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        query: `insert into chat_messages(chat_image,message,user_id, chat_id) values(?,?,?, uuid_to_bin(?))`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
-export const getSpecificChatId = async (mQuery : MysqlQuery) : Promise<MysqlResult<IChatId[]>> => {
+export const getSpecificChatId = async (mQuery: MysqlQuery): Promise<MysqlResult<IChatId[]>> => {
     return await query({
-       query : `SELECT bin_to_uuid(c.chat_id) as chat_id FROM chat_table c
+        query: `SELECT bin_to_uuid(c.chat_id) as chat_id FROM chat_table c
        JOIN chat_members cm1 ON cm1.chat_id = c.chat_id AND cm1.user_id = ?
        JOIN chat_members cm2 ON cm2.chat_id = c.chat_id AND cm2.user_id = ?
        WHERE c.chat_type = 'Personal'`,
-       params : mQuery.params,
-       databasePool : mQuery.databasePool
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
-export const deleteChat = async(mQuery : MysqlQuery) : Promise<MysqlResult<void>> => {
+export const deleteChat = async (mQuery: MysqlQuery): Promise<MysqlResult<void>> => {
     return await execute({
-        query : `delete from chat_table where chat_id = uuid_to_bin(?)`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        query: `delete from chat_table where chat_id = uuid_to_bin(?)`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
-export const deleteChatMembers = async(mQuery : MysqlQuery) : Promise<MysqlResult<void>> => {
+export const deleteChatMembers = async (mQuery: MysqlQuery): Promise<MysqlResult<void>> => {
     return await execute({
-        query : `delete from chat_members where chat_id = uuid_to_bin(?)`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        query: `delete from chat_members where chat_id = uuid_to_bin(?)`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
-export const deleteAllChatMessages = async (mQuery : MysqlQuery) : Promise<MysqlResult<void>> => {
+export const deleteAllChatMessages = async (mQuery: MysqlQuery): Promise<MysqlResult<void>> => {
     return await execute({
-        query : `delete from chat_messages where chat_id = uuid_to_bin(?)`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        query: `delete from chat_messages where chat_id = uuid_to_bin(?)`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
 }
 
-export const deleteAllChatMessagesReads = async (mQuery : MysqlQuery) : Promise<MysqlResult<void>> => {
+export const deleteAllChatMessagesReads = async (mQuery: MysqlQuery): Promise<MysqlResult<void>> => {
     return await execute({
-        query : `delete from chat_message_reads where chat_id = uuid_to_bin(?)`,
-        params : mQuery.params,
-        databasePool : mQuery.databasePool
+        query: `delete from chat_message_reads where chat_id = uuid_to_bin(?)`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
     })
+}
+
+export const getChatMessage = async (mQuery: MysqlQuery): Promise<MysqlResult<IChatMessage>> => {
+    const result = await query<IChatMessage>({
+        query: `SELECT * FROM chat_messages where chat_id = uuid_to_bin(?) and chat_message_id = uuid_to_bin(?);`,
+        params: mQuery.params,
+        databasePool: mQuery.databasePool
+    })
+
+    return {
+        data: result.data?.[0],
+        error: result.error
+    }
 }

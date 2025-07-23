@@ -24,27 +24,12 @@ const profileStore = defineStore("profileStore", () => {
     }
 
 
-    const deleteProfile = async (): Promise<ResponseModel> => {
-        try {
-            const res = await clientSideFetch(
-                {
-                    url: `${API_URL}/profile/delete`,
-                    method: 'DELETE',
-                    body: undefined,
-                    credentials: "include",
-                    immediate: false
-                }
-            ) as ResponseModel
-
-            return res
-        } catch (e) {
-            if (e instanceof ResponseModel) {
-                return e
-            } else if (e instanceof Error) {
-                return new ResponseModel(e.message ?? "Something went wrong", 500)
-            }
-            return new ResponseModel("Something went wrong", 500)
-        }
+    const deleteProfile = async () => {
+        return await request({
+            url: `/auth/delete`,
+            method: "DELETE",
+            credentials: "include"
+        }) 
     }
 
     return { userProfile, getProfile, deleteProfile }

@@ -59,16 +59,6 @@
                 </button>
               </div>
             </div>
-
-            <div v-if="message.user_id === profile.userProfile?.user_id">
-              <div class="" v-if="seemedMessage.some(e =>
-                e.chat_message_id === message.chat_message_id
-              )">
-                <span style="font-size: 10px;">
-                  Seemed
-                </span>
-              </div>
-            </div>
           </div>
 
           <div v-if="message.user_id === profile.userProfile?.user_id"
@@ -93,6 +83,15 @@ const toast = toastStore()
 
 const updateMessageChatId = ref<string>("")
 const newUpdateChatMessage = ref<string>("")
+
+const listeners = () => {
+$socket.on("edit_chat_message_result", edit_chat_message_result)
+$socket.on("delete_chat_message_result", delete_chat_message_result)
+}
+
+onMounted(() => {
+  listeners()
+})
 
 const messages = props.chat_messages as IMessages[]
 
@@ -122,11 +121,13 @@ const edit_chat_message_result = (response : any) => {
     if(res.status == 200){
         updateMessageChatId.value = ""
         newUpdateChatMessage.value = ""
-    }
 
-    const getResult = JSON.parse(JSON.stringify(res.value))
-    
-    messages.find(e => e.chat_message_id == getResult.chat_message_id)!.message = getResult.message
+        const json = JSON.parse(JSON.stringify(res.value))
+        const findMessage = messages.find(e => json.find(d => e.chat_message_id == d.chat_message_id))
+        if(findMessage){
+          findMessage.message = json[0].message ?? ""
+        }
+    }
 
     toast.sendToastWithResponse(res)
   } catch (e) {
@@ -147,11 +148,6 @@ const delete_chat_message_result = (response : any) => {
 
   }
 }
-
-$socket.on("edit_chat_message_result", edit_chat_message_result)
-$socket.on("delete_chat_message_result", delete_chat_message_result)
-
-
 
 </script>
 

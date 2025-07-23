@@ -52,9 +52,11 @@
         <div v-show="showMenu == ShowMenu.add_friend">
 
             <div class="d-flex align-items-center justify-content-center">
-                <input v-model="search" name="search" class="form-control"
-                id="search" type="text" aria-placeholder="search" placeholder="Search" />
-                <button class="btn btn-primary mx-1" @click="searchQuery()">Search</button>
+                <form @submit.prevent="searchQuery()" class="w-100 d-flex">
+                    <input v-model="search" name="search" class="form-control" id="search" type="text"
+                        aria-placeholder="search" placeholder="Search" />
+                    <button class="btn btn-primary mx-1" type="submit">Search</button>
+                </form>
             </div>
 
             <div class="mt-3">
@@ -102,7 +104,8 @@
                                     style="width: 40px; height: 40px; object-fit: cover;" />
                                 {{ item.username }}
                             </div>
-                            <button class="btn btn-success d-inline-flex" @click="sendFriendRequest(item, FriendStatus.Waiting)"
+                            <button class="btn btn-success d-inline-flex"
+                                @click="sendFriendRequest(item, FriendStatus.Waiting)"
                                 :disabled="(item.status == FriendStatus.Waiting || item.status === FriendStatus.Accepted)">
                                 <span class="material-symbols-outlined pe-2">
                                     person_add
@@ -118,15 +121,17 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { reactive, ref, toDisplayString, watch } from 'vue';
 import { Form, Field, ErrorMessage, configure, cleanupNonNestedPath } from "vee-validate"
 import * as yup from "yup"
 import IUser from '~/model/interfaces/iuser';
 import type IResponse from '~/model/interfaces/iresponse';
 import toastStore from '~/store/toast-store';
 import { chatStore } from '~/store/chat-store';
-import type {IFriend } from '~/model/friend-model';
-import {FriendStatus} from '~/model/friend-model';
+import type { IFriend } from '~/model/friend-model';
+import { FRIEND_REQUEST_RESULT, FriendStatus } from '~/model/friend-model';
+import { SOCKET_EMIT_EVENTS, SOCKET_ON_EVENTS } from '~/common/socket-events';
+import { request } from '~/common/genericFetch';
 
 /* Interfaces  */
 enum ShowMenu {
@@ -157,25 +162,27 @@ const validator = yup.object({
 
 
 const requests = () => {
-    $socket.emit("get_friends")
-    $socket.emit("get_friend_requests") 
+    objects.friends = []
+    objects.getFriendRequests = []
+    $socket.emit(SOCKET_EMIT_EVENTS.GET_FRIENDS)
+    $socket.emit(SOCKET_EMIT_EVENTS.GET_FRIEND_REQUESTS)
 }
 
 const listeners = () => {
-    $socket.on("search_user_result", searchUserResult)
-    $socket.on("get_friends_result", getFriendsResult)
-    $socket.on("friend_request_result", friendRequestResult)
-    $socket.on("update_friend_request_result", updateFriendRequestResult)
-    $socket.on("friend_request_getted_result", friendRequestGettedResult)
-    $socket.on("create_chat_result", createChatResult)
-    $socket.on("get_friend_requests_result", getFriendRequestsResult)
+    $socket.on(SOCKET_ON_EVENTS.SEARCH_USER_RESULT, searchUserResult)
+    $socket.on(SOCKET_ON_EVENTS.GET_FRIENDS_RESULT, getFriendsResult)
+    $socket.on(SOCKET_ON_EVENTS.FRIEND_REQUEST_RESULT, friendRequestResult)
+    $socket.on(SOCKET_ON_EVENTS.UPDATE_FRIEND_REQUEST_RESULT, updateFriendRequestResult)
+    $socket.on(SOCKET_ON_EVENTS.FRIEND_REQUEST_GETTED_RESULT, friendRequestGettedResult)
+    $socket.on(SOCKET_ON_EVENTS.CREATE_CHAT_RESULT, createChatResult)
+    $socket.on(SOCKET_ON_EVENTS.GET_FRIEND_REQUESTS_RESULT, getFriendRequestsResult)
 }
 
 /* Setup  */
 onMounted(() => {
     requests()
     listeners()
-}) 
+})
 
 onUnmounted(() => {
     $socket.off("search_user_result")
@@ -185,6 +192,9 @@ onUnmounted(() => {
     $socket.off("friend_request_getted_result")
     $socket.off("create_chat_result")
     $socket.off("get_friend_requests_result")
+    $socket.off("new_friend_request_gotted")
+    $socket.off("friend_request_accepted")
+    $socket.off("unfriend_request_result")
 })
 
 
@@ -197,12 +207,12 @@ const searchQuery = () => {
     $socket.emit("search_user", { username: search.value.trim() })
 }
 
-const sendFriendRequest = (user: IUser, status : FriendStatus) => {
-    $socket.emit("friend_request", { receiver_id: user.user_id, status : status })
+const sendFriendRequest = (user: IUser, status: FriendStatus) => {
+    $socket.emit("friend_request", { receiver_id: user.user_id, status: status })
 }
 
 const setFriendRequest = (user: IUser, status: FriendStatus) => {
-    $socket.emit('update_friend_request', { sender_id: user.user_id, friend_status_type : status })
+    $socket.emit('update_friend_request', { sender_id: user.user_id, friend_status_type: status })
 }
 
 const createChat = (user: IUser) => {
@@ -214,7 +224,6 @@ const createChat = (user: IUser) => {
 const searchUserResult = (response: any) => {
     try {
         const res = response as IResponse
-
         objects.searchedFriends = res.value as IFriend[]
     } catch (e) {
         console.error(e)
@@ -235,18 +244,21 @@ const getFriendsResult = (response: any) => {
 const friendRequestResult = (response: any) => {
     try {
         const res = response as IResponse
-        if(res.status === 200){
-            console.log(res.value)
-            if(Array.isArray(res.value) && res.value.length > 0){
-                const getReceiverId = JSON.parse(JSON.stringify(res.value))
-                const result = objects.searchedFriends.findIndex(e => getReceiverId.map(d => e.user_id == d["receiver_id"]))
-                objects.searchedFriends.splice(result, 1)
-                
+
+        if (res.status === 200) {
+            if (res.type === FRIEND_REQUEST_RESULT.NEW_FRIEND_REQUEST_GOTTED) {
+                requests()
+            } else if (res.type === FRIEND_REQUEST_RESULT.REQUEST_SENDED) {
+                if (Array.isArray(res.value) && res.value.length > 0) {
+                    const getReceiverId = JSON.parse(JSON.stringify(res.value))
+                    const result = objects.searchedFriends.findIndex(e => getReceiverId.map(d => e.user_id == d["receiver_id"]))
+                    objects.searchedFriends.splice(result, 1)
+                }
+
+
             }
         }
-
         toast.sendToastWithResponse(res)
-
     } catch (e) {
         console.error(e)
     }
@@ -256,7 +268,7 @@ const updateFriendRequestResult = (response: any) => {
     try {
         const res = response as IResponse
 
-        if(res.status === 200){
+        if (res.status === 200) {
             objects.friends = []
             chat.emitChat()
             requests()
@@ -268,11 +280,9 @@ const updateFriendRequestResult = (response: any) => {
     }
 }
 
-const getFriendRequestsResult = (response : any) => {
-try {
+const getFriendRequestsResult = (response: any) => {
+    try {
         const res = response as IResponse
-
-        console.log(res.value)
 
         objects.getFriendRequests = (res.value as IUser[])
     } catch (e) {
@@ -280,7 +290,7 @@ try {
     }
 }
 
-const friendRequestGettedResult = (response : any) => {
+const friendRequestGettedResult = (response: any) => {
     try {
         const res = response as IResponse
 
@@ -290,10 +300,10 @@ const friendRequestGettedResult = (response : any) => {
     }
 }
 
-const createChatResult = (response : any) => {
+const createChatResult = (response: any) => {
     try {
         const res = response as IResponse
-        if(res.status === 200){
+        if (res.status === 200) {
             chat.emitChat()
         }
         toast.sendToastWithResponse(res)

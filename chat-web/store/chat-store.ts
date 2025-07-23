@@ -72,6 +72,10 @@ export const chatStore = defineStore("chatStore", () => {
     }
 
     const emitChat = () => {
+
+        chats.privateChat = []
+        chats.groupChats = []
+
         $socket.emit("get_chats")
         $socket.emit("get_group_chats")
     }

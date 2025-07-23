@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { accessTokenVerify } from "../middleware/token-verify";
 import { verifyUser } from "../middleware/verify-user";
-import { deleteProfile, getProfile, updateProfile, updateProfilePhoto } from "../controller/profile-controller";
+import {getProfile, updateProfile, updateProfilePhoto } from "../controller/profile-controller";
 import uaParserMiddleware from "../middleware/ua-parser";
 import errorCodes from "../common/error.messages";
 import { check } from "express-validator";
@@ -11,15 +11,19 @@ import imageStorage from "../../../service/image-storage";
 const profileRouter = Router()
 
 profileRouter.get("/get",[
-    accessTokenVerify,
-    uaParserMiddleware
+    accessTokenVerify
 ], getProfile )
+
+
+profileRouter.put("/update-photo", [
+    accessTokenVerify,
+    imageStorage.single("photo")
+], updateProfilePhoto)
 
 profileRouter.put(
     "/update",
     [
         accessTokenVerify,
-        verifyUser,
         inputValidator([
             check("username")
                 .optional()
@@ -53,17 +57,4 @@ profileRouter.put(
     ],
     updateProfile
 );
-
-profileRouter.put("/update-photo", [
-    accessTokenVerify,
-    verifyUser,
-    imageStorage.single('photo')
-], updateProfilePhoto)
-
-profileRouter.delete("/delete", [
-    accessTokenVerify,
-    verifyUser
-], deleteProfile)
-
-
 export default profileRouter

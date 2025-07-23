@@ -1,5 +1,6 @@
 import { execute, query } from "../../../../service/database";
 import { MysqlQuery, MysqlResult } from "../mysql/mysql.interface";
+import FriendStatus from "../types/friend-status";
 import { ICheckFriend, IFriend, IFriendRequest } from "./friend.interface";
 
 export const getFriends = async (mQuery: MysqlQuery): Promise<MysqlResult<IFriend[]>> => {
@@ -44,7 +45,19 @@ export const sendFriendRequest = async (mQuery: MysqlQuery): Promise<MysqlResult
     })
 }
 
-export const searchFriend = async (mQuery: MysqlQuery): Promise<MysqlResult<any>> => {
+export const searchFriend = async (mQuery: MysqlQuery, status : FriendStatus[], useNotIn : boolean = true): Promise<MysqlResult<any>> => {
+    
+    if(status.length === 0){
+        return {
+            data : []
+        }
+    }
+
+    var searchString = status.map(e => `'${e}'`).join(', ')
+    const inOperator = useNotIn ? 'NOT IN' : 'IN'
+
+    const paramArray = Object.values(mQuery.params)
+
     return await query({
         query: `SELECT DISTINCT
     u.user_id,
@@ -60,11 +73,11 @@ LEFT JOIN friends f
 WHERE
     (
         f.status IS NULL
-        OR f.status NOT IN ('ACCEPTED', 'WAITING')
+        OR f.status ${inOperator} (${searchString})
     )
     AND LOWER(u.username) LIKE CONCAT('%', LOWER(?), '%')
     AND u.user_id != ?`,
-        params: mQuery.params,
+        params: [...paramArray, ...status],
         databasePool: mQuery.databasePool
     })
 }

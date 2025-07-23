@@ -1,10 +1,10 @@
-import databasePool from "../../../../service/database"
-import { updateFriendRequest } from "../../model/friend/friend.model"
-import FriendStatus from "../../model/types/friend-status"
-import ResponseModel from "../../model/error-model"
-import errorMessages from "../../common/error.messages"
-import { deleteAllChatMessages, deleteAllChatMessagesReads, deleteChat, deleteChatMembers, getChatMembers, getSpecificChatId } from "../../model/chat/chat.model"
-import { IResult } from "../../model/common/common.interface"
+import databasePool from "../../../service/database"
+import { updateFriendRequest } from "../model/friend/friend.model"
+import FriendStatus from "../model/types/friend-status"
+import ResponseModel from "../model/error-model"
+import errorMessages from "../common/error.messages"
+import { deleteAllChatMessages, deleteAllChatMessagesReads, deleteChat, deleteChatMembers, getChatMembers, getSpecificChatId } from "../model/chat/chat.model"
+import { IResult } from "../model/common/common.interface"
 
 export const unFriendHelper = async (status: FriendStatus, userId: number, friendId: number): Promise<IResult<string>> => {
     const connection = await databasePool.getConnection()

@@ -1,9 +1,9 @@
 import {ExtendedError, Socket, } from "socket.io";
-import errorCodes from "../../common/error.messages";
-import jwt from "jsonwebtoken"
-import ResponseModel from "../../model/error-model";
-import { verifyToken } from "../../common/jwt";
-import { findUserById } from "../../model/auth/auth.model";
+import ResponseModel from "../model/error-model";
+import errorCodes from "../common/error.messages";
+import { verifyToken } from "../common/jwt";
+import { findUserById } from "../model/auth/auth.model";
+
 
 interface Token {
     email : string,

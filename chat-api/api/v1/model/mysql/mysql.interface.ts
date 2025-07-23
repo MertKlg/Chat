@@ -8,7 +8,7 @@ export interface BaseMysqlQuery {
 }
 
 export interface MysqlQuery {
-    params : object | object[],
+    params :  object,
     databasePool?: PoolConnection
 }
 

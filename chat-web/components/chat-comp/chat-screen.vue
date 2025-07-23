@@ -2,20 +2,21 @@
   <div class="container border border-left rounded-start rounded-4 p-0 m-0 h-100 position-relative">
     <div class="chat-screen h-100 d-flex flex-column">
       <div class="chat-header p-3 border-bottom d-flex align-items-center">
-        <img  :src="config.public.BASE_URL + props.chat_info.photo" style="height: 40px; width:40px; overflow: hidden; object-fit: cover;" class="me-2 img-fluid rounded-circle" alt="" />
+        <img :src="config.public.BASE_URL + props.chat_info.photo"
+          style="height: 40px; width:40px; overflow: hidden; object-fit: cover;" class="me-2 img-fluid rounded-circle"
+          alt="" />
         <h5 class="m-0">{{ props.chat_info.title }}</h5>
+        <div v-if="props.chat_info.chat_type == 'GROUP'" class="ms-auto">
+          <button class="btn btn-primary" @click="leaveGroup">Leave</button>
+        </div>
       </div>
       <div class="chat-messages flex-grow-1 overflow-auto px-3" id="chat-messages">
 
-        <chat-list-comp 
-          :chat_info="props.chat_info"
-          :chat_messages="messages"
-          :profile="profile"
-          :seemedMessage="seemedMessage"
-        />
+        <chat-list-comp :chat_info="props.chat_info" :chat_messages="messages" :profile="profile"
+          :seemedMessage="seemedMessage" />
       </div>
-      <SendMessage :chat_info="props.chat_info"  />
-    </div> 
+      <SendMessage :chat_info="props.chat_info" />
+    </div>
   </div>
 </template>
 
@@ -27,17 +28,19 @@ import type IMessages from '~/model/interfaces/imessages';
 import type ISeemedMessage from '~/model/interfaces/iseemed-message';
 import ChatListComp from './list/chat-list-comp.vue';
 import SendMessage from './actions/send-message.vue';
+import toastStore from '~/store/toast-store';
+import { chatStore } from '~/store/chat-store';
 
 
 const profile = profileStore()
 const { $socket } = useNuxtApp();
 const props = defineProps(["chat_info"])
 const messages = ref<IMessages[]>([])
+const chat = chatStore()
 const seemedMessage = ref<ISeemedMessage[]>([])
 const config = useRuntimeConfig()
+const toast = toastStore()
 
-
-console.log(props)
 
 /* JS */
 const scrollMessages = () => {
@@ -46,9 +49,14 @@ const scrollMessages = () => {
     getMessagesElement.scrollTop = getMessagesElement.scrollHeight
 }
 
+const leaveGroup = () => {
+  if(props.chat_info.chat_type == "GROUP"){
+    $socket.emit("leave_group_chat", { chat_id: props.chat_info.chat_id, group_id : props.chat_info.group_id });
+  }
+}
 
 /* Socket listens */
-const get_chat_messages_result = (response : any) => {
+const get_chat_messages_result = (response: any) => {
   try {
     const res = response as IResponse;
 
@@ -64,10 +72,7 @@ const get_chat_messages_result = (response : any) => {
 }
 
 
-
-
-
-const get_last_chat_message = (response : any) => {
+const get_last_chat_message = (response: any) => {
   try {
     const res = response as IResponse
     const handleMessage = res.value as IMessages[]
@@ -76,7 +81,10 @@ const get_last_chat_message = (response : any) => {
 
     const { chat_id } = props.chat_info
 
-    $socket.emit("message_seen", { chat_message_id: handleMessage[0].chat_message_id, chat_id: chat_id })
+    handleMessage.map(e => {
+      $socket.emit("message_seen", { chat_message_id: e.chat_message_id, chat_id: chat_id, sender_id: e.user_id })
+    })
+
 
     nextTick(() => {
       scrollMessages();
@@ -86,14 +94,13 @@ const get_last_chat_message = (response : any) => {
   }
 }
 
-const messages_seemed_result = ( response : any ) => {
-  try {
+const leave_group_chat_result = (response : any) => {
+  try{
     const res = response as IResponse
-
-    const handleMessage = res.value as ISeemedMessage[]
-    seemedMessage.value.push(...handleMessage)
-
-  } catch (e) {
+    if(res.status == 200){
+      window.location.reload()
+    }
+  }catch(e){
     console.error(e)
   }
 }
@@ -102,8 +109,8 @@ const messages_seemed_result = ( response : any ) => {
 
 const setupSocketListeners = () => {
   $socket.on("get_chat_messages_result", get_chat_messages_result)
-  $socket.on("messages_seemed_result", messages_seemed_result)
   $socket.on("get_last_chat_message", get_last_chat_message)
+  $socket.on("leave_chat_group_result", leave_group_chat_result)
 }
 
 const stopSocketListeners = () => {
@@ -112,7 +119,8 @@ const stopSocketListeners = () => {
   $socket.off("send_chat_image_result");
   $socket.off("join_chat_room");
   $socket.off("get_last_chat_message");
-  $socket.off("messages_seemed_result");
+  $socket.off("edit_chat_message_result")
+  $socket.off("delete_chat_message_result")
   $socket.off("edit_chat_message_result")
   $socket.off("delete_chat_message_result")
   $socket.emit("leave_chat_room", { chat_id: props.chat_info?.chat_id });
@@ -126,7 +134,7 @@ watch(() => props.chat_info, (newChat, oldChat) => {
 
   if (newChat && newChat.chat_id) {
     const { chat_id } = newChat;
-    messages.value = []; 
+    messages.value = [];
 
 
     $socket.emit("get_chat_messages", { chat_id });

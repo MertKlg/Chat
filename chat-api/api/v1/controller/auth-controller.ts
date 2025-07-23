@@ -8,6 +8,7 @@ import { compare, hash } from "../common/hash.pass";
 import errorMessages from "../common/error.messages";
 import { generateToken } from "../common/jwt";
 import { IUser } from "../model/auth/auth.interface";
+import { deleteUserAccountHelper } from "../helper/delete-account-helper";
 
 export const signUp = genericFunc(async (req, res, next) => {
     const { username, email, password, phone } = req.body
@@ -44,7 +45,8 @@ export const signIn = genericFunc(async (req, res, next) => {
     if (!user.data || user.error || user.data.is_active == ProfileStatus.DEACTIVE)
         throw new ResponseModel(ErrorMessages.USER.NOT_FOUNDED, 404)
 
-    const userPassword = await findUserPasswordById({ params: [user.data.user_id] })
+
+    const userPassword = await findUserPasswordById({ params: [ user.data.user_id] })
 
     if (!userPassword.data || userPassword.error)
         throw new ResponseModel(ErrorMessages.USER.NOT_FOUNDED, 400)
@@ -150,4 +152,23 @@ export const signOut = genericFunc(async (req, res, next) => {
     res.clearCookie("access_token")
     res.clearCookie("refresh_token")
     res.json(new ResponseModel(ErrorMessages.AUTH.SUCCESSFULLY_SIGNED_IN, 200))
+})
+
+
+export const deleteUser = genericFunc(async (req, res, next) => {
+    const user = res.locals.user
+
+    const result = await deleteUserAccountHelper(user)
+
+    if(result.error){
+        console.log(result.error)
+        res.json(new ResponseModel(result.error.message, 500))
+        return
+    
+    }
+
+    res.clearCookie("access_token")
+    res.clearCookie("refresh_token")
+
+    res.json(new ResponseModel("Success", 200))
 })

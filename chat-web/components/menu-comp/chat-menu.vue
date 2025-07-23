@@ -20,6 +20,7 @@
         </div>
       </div>
 
+      
       <div class="flex-grow-1 overflow-auto p-2">
         <ul class="list-group">
           <li class="list-group-item list-group-item-action" style="cursor: pointer;" v-for="chat in chat.chats.privateChat"
@@ -44,7 +45,7 @@
           <li class="list-group-item list-group-item-action"
            style="cursor: pointer;"
             v-for="chat in chat.chats.groupChats"
-            @click="changeComp(ChatScreen, { chat_id: chat.chat_id, title : chat.group_name, photo : chat.photo, chat_type : chat.chat_type })"
+            @click="changeComp(ChatScreen, { chat_id: chat.chat_id, title : chat.group_name, photo : chat.photo, chat_type : chat.chat_type, group_id : chat.group_id })"
            :key="chat.group_id">
             <div>
               <div class="d-flex align-items-center">

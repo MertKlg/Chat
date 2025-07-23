@@ -9,5 +9,8 @@ module.exports = {
         "/node_modules/",
         "/dist/"
     ],
-    
+    setupFilesAfterEnv : [
+        "<rootDir>/test/jest.setup.ts"
+    ]
+
 }

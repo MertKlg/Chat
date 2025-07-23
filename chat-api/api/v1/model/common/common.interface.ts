@@ -46,7 +46,12 @@ export interface ErrorMessages {
 
   FRIEND : {
     REQUEST_ALREADY_SENDED : string,
-    REQUEST_SENDED : string 
+    REQUEST_SENDED : string,
+    NEW_REQUEST_GETTED : string,
+    SEND_A_NEW_FRIEND_REQUEST : string,
+    ACCEPTED_FRIEND_REQUEST : string,
+    REJECTED_FRIEND_REQUEST : string,
+    UNFRIEND_FRIEND_REQUSET : string
   }
 
   USER : {
@@ -54,11 +59,17 @@ export interface ErrorMessages {
   },
   PROFILE : {
     UPDATED : string,
-    PROFILE_IMAGE_UPDATED : string
+    PROFILE_IMAGE_UPDATED : string,
+    PROFILE_IMAGE_MISSING: string
   },
 
   MESSAGE : {
-    MESSAGE_NOT_SENDED : string
+    MESSAGE_NOT_SENDED : string,
+    MESSAGE_SENDED : string,
+    MESSAGE_COULD_NOT_UPDATED : string,
+    MESSAGE_DELETED : string,
+    MESSAGE_UPDATED : string,
+    MESSAGE_COULD_NOT_DELETED : string
   },
 
   TOKEN: {

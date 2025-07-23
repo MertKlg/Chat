@@ -39,3 +39,15 @@ export interface IChatSeemed extends IChatUser{
     seemed_at : string,
     chat_message_id : string
 }
+
+export interface IChatGroup {
+  group_id : string,
+  chat_id : string,
+  group_name : string,
+  author_id : string,
+  author_name : string,
+  author_photo : string,
+  author_email : string,
+  created_at : string,
+  photo : string
+}

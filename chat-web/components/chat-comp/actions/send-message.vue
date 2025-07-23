@@ -58,6 +58,8 @@ const sendMessage = () => {
   if (!newMessage.value.trim()) return;
   const { chat_id, chat_type} = props.chat_info
   $socket.emit("send_chat_message", { chat_id: chat_id, message: newMessage.value, message_type : MessageTypes.text, chat_type : chat_type })
+
+  newMessage.value = "".trim()
 }
 
 
@@ -176,9 +178,8 @@ const convertBase64Format = (file: File) => {
 const send_chat_message_result = (response : any) => {
   try {
     const res = response as IResponse;
-    if (res.status == 200) {
-      newMessage.value = "";
-    } else {
+
+    if(res.status !== 200) {
       toast.error({ title: 'Failed to send message', description: res.message || 'Please try again' });
     }
   } catch (e) {

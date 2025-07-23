@@ -142,4 +142,5 @@ export const request = async <T>(iAxiosRequest: IAxiosRequest, mapper?: RowMappe
       return new ResultModel(null, { message: "Something went wrong", status: 500 })
     }
   }
+  return new ResultModel(null, { message: "Something went wrong", status: 500 });
 }

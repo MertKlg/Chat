@@ -1,9 +1,10 @@
 import { Server } from "socket.io";
-import { webSocketAccessTokenVerify } from "./middleware/socket-token-verify";
+
 import friendSocket from "./events/friend-socket";
 import chatSocket from "./events/chat-socket";
 import chatGroupSocket from "./events/chat-group-socket";
 import tokenTimeoutHandler from "./handlers/token-timeout-handler";
+import { webSocketAccessTokenVerify } from "../middleware/socket-token-verify";
 
 
 const appSocket = (io : Server) => {

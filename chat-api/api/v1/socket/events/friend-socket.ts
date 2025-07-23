@@ -7,6 +7,7 @@ import {
   getFriendRequestHandler,
   getFriendsHandler,
   rejectFriendHandler,
+  searchUserFriendHandler,
   searchUserHandler,
   unfriendHandler,
 } from "../handlers/friends-handler";
@@ -24,6 +25,7 @@ const friendSocket = (socket: Socket) => {
   );
 
   socket.on("search_user", async (data) => searchUserHandler(data, socket));
+  socket.on("search_user_friend", async (data) => searchUserFriendHandler(data,socket))
 
   socket.on("update_friend_request", async (data) => {
 

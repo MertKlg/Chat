@@ -43,3 +43,12 @@ export const updatePassword = async (mQuery: MysqlQuery): Promise<MysqlResult<an
     return await execute({ query: "UPDATE users SET password = ? where user_id = ?", params: mQuery.params, databasePool: mQuery.databasePool })
 }
 
+
+
+export const deleteUser = async (mQuery: MysqlQuery): Promise<MysqlResult<any>> => {
+    return await execute({
+        params : mQuery.params,
+        query : `delete from users where user_id = ?`,
+        databasePool : mQuery.databasePool
+    })
+}

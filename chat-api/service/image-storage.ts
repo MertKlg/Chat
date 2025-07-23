@@ -5,13 +5,13 @@ import fs from "fs"
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
 
-        const {users_id} = req.res?.locals.user
-        if (!users_id) {
+        const {user_id} = req.res?.locals.user
+        if (!user_id) {
             cb(new Error('User ID is undefined'), '');
             return
         }
 
-        const uploadPath = path.join('storage', users_id.toString());
+        const uploadPath = path.join('storage', user_id.toString());
 
         fs.mkdirSync(uploadPath, {recursive : true})
 

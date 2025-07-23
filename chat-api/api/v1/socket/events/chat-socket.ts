@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import ResponseModel from "../../model/error-model";
-import { createChatHandler, deleteChatMessageHandler, editChatMessageHandler, getChatMessageHandler, getChatsHandler, messageSeemedHandler, sendImageMessageHandler, sendTextMessageHandler } from "../handlers/chat-handlers";
+import { createChatHandler, deleteChatMessageHandler, editChatMessageHandler, getChatMessageHandler, getChatsHandler, sendImageMessageHandler, sendTextMessageHandler } from "../handlers/chat-handlers";
 import { MessageType } from "../../model/chat/chat.enum";
 
 const chatSocket = (socket: Socket) => {
@@ -46,9 +46,6 @@ const chatSocket = (socket: Socket) => {
       break;
     }
   });
-
-
-  socket.on("message_seen", async(data) => messageSeemedHandler(data,socket))
 };
 
 export default chatSocket;

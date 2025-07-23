@@ -4,7 +4,9 @@ import ResponseModel from "../../model/error-model";
 import FriendStatus from "../../model/types/friend-status";
 import errorMessages from "../../common/error.messages";
 import { checkFriendRequest, deleteFriendRequest, getFriendRequest, getFriends, searchFriend, sendFriendRequest, updateFriendRequest } from "../../model/friend/friend.model";
-import { unFriendHelper } from "../helper/friend-helper";
+import { unFriendHelper } from "../../helper/friend-helper";
+import { FRIEND_REQUEST_RESULT } from "../../common/result-types";
+import { convertToObject } from "typescript";
 
 export const getFriendsHandler = async (data: any, socket: Socket) => {
     const { user_id } = socket.data.user;
@@ -55,7 +57,8 @@ export const friendRequestHandler = async (data: any, socket: Socket) => {
             return
         }
 
-        socket.emit("friend_request_result", new ResponseModel(errorMessages.FRIEND.REQUEST_SENDED, 200, [{ receiver_id }]));
+        socket.emit("friend_request_result", new ResponseModel(errorMessages.FRIEND.REQUEST_SENDED, 200, [{ receiver_id, status }], FRIEND_REQUEST_RESULT.REQUEST_SENDED));
+        socket.to(receiver_id).emit("friend_request_result", new ResponseModel(`${username} sent you a new friend request`, 200, [], FRIEND_REQUEST_RESULT.NEW_FRIEND_REQUEST_GOTTED));        
         return
     } else if (checkFriend.data) {
         const deleteResult = await deleteFriendRequest({ params: [user_id,receiver_id,receiver_id,user_id] });
@@ -73,7 +76,9 @@ export const friendRequestHandler = async (data: any, socket: Socket) => {
             return
         }
 
-        socket.emit("friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200, [{ receiver_id, status }]));
+        socket.emit("friend_request_result", new ResponseModel(errorMessages.FRIEND.REQUEST_SENDED, 200, [{ receiver_id, status }], FRIEND_REQUEST_RESULT.REQUEST_SENDED));
+        socket.to(receiver_id).emit("friend_request_result", new ResponseModel(`${username} sent you a new friend request`, 200, [], FRIEND_REQUEST_RESULT.NEW_FRIEND_REQUEST_GOTTED));
+        return
     }else {
         socket.emit("friend_request_result", new ResponseModel(errorMessages.GENERAL.SOMETHING_WENT_WRONG, 500));
         return
@@ -88,20 +93,21 @@ export const searchUserHandler = async (data: any, socket: Socket) => {
         socket.emit("search_user_result", new ResponseModel(errorMessages.USERNAME.EMPTY, 400));
         return;
     }
-    const search = await searchFriend({ params: [user_id, user_id, username, user_id] })
+
+    const search = await searchFriend({ params: [user_id, user_id,username, user_id]},[FriendStatus.Rejected, FriendStatus.Unfriend], false )
 
     if (search.error) {
+        console.error(search.error)
         socket.emit("search_user_result", new ResponseModel(search.error.message ?? errorMessages.GENERAL.SOMETHING_WENT_WRONG, 500, []));
         return;
     }
-
     socket.emit("search_user_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200, search.data));
 };
 
 
 export const acceptFriendHandler = async (data: any, socket: Socket) => {
     const { sender_id } = data;
-    const { user_id } = socket.data.user;
+    const { user_id,username } = socket.data.user;
 
     const updateResult = await updateFriendRequest({ params: [FriendStatus.Accepted, user_id, sender_id, sender_id, user_id] });
 
@@ -110,7 +116,9 @@ export const acceptFriendHandler = async (data: any, socket: Socket) => {
         return
     }
 
-    socket.emit("update_friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200));
+    socket.emit("update_friend_request_result", new ResponseModel(errorMessages.FRIEND.ACCEPTED_FRIEND_REQUEST, 200, [] , FRIEND_REQUEST_RESULT.FRIEND_REQUEST_UPDATED));
+
+    socket.to(sender_id).emit("update_friend_request_result", new ResponseModel(`${username} accepted your friend request`, 200, [], FRIEND_REQUEST_RESULT.ACCEPTED_FRIEND_REQUEST ))
 }
 
 export const rejectFriendHandler = async (data: any, socket: Socket) => {
@@ -124,7 +132,7 @@ export const rejectFriendHandler = async (data: any, socket: Socket) => {
         return
     }
 
-    socket.emit("update_friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200));
+    socket.emit("update_friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200, [] , FRIEND_REQUEST_RESULT.FRIEND_REQUEST_UPDATED));
 }
 
 export const unfriendHandler = async (data: any, socket: Socket) => {
@@ -138,11 +146,19 @@ export const unfriendHandler = async (data: any, socket: Socket) => {
         return
     }
 
-    socket.emit("update_friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200))
+    socket.emit("update_friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200, [], FRIEND_REQUEST_RESULT.FRIEND_REQUEST_UPDATED))
+    socket.to(sender_id).emit("update_friend_request_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200,[], FRIEND_REQUEST_RESULT.UNFRIEND_REQUEST_RESULT ))
 }
 
-export const searchFriendHandler = async (data: any, socket: Socket) => {
+export const searchUserFriendHandler = async (data: any, socket: Socket) => {
     const { username } = data;
-    const {user_id } = socket.data.user
-    
+    const { user_id } = socket.data.user
+
+    const search = await searchFriend({ params: [user_id, user_id, username, user_id]}, [FriendStatus.Accepted], false)
+    if(search.error){
+        socket.emit("search_user_friend_result", new ResponseModel(search.error.message ?? errorMessages.GENERAL.SOMETHING_WENT_WRONG, 500))
+        return
+    }
+
+    socket.emit("search_user_friend_result", new ResponseModel(errorMessages.GENERAL.SUCCESS, 200, search.data))
 }

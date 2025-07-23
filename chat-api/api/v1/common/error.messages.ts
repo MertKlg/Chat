@@ -34,15 +34,26 @@ const errorMessages: ErrorMessages = {
   },
   FRIEND : {
     REQUEST_ALREADY_SENDED : "Request already sended",
-    REQUEST_SENDED : "Request sended"
+    REQUEST_SENDED : "Request sended",
+    NEW_REQUEST_GETTED : "New friend request gotted",
+    SEND_A_NEW_FRIEND_REQUEST : "Send a new friend request",
+    ACCEPTED_FRIEND_REQUEST : "Accepted your friend request",
+    REJECTED_FRIEND_REQUEST : "Rejected your friend request",
+    UNFRIEND_FRIEND_REQUSET : "Unfriended"
   },
   PROFILE : {
     UPDATED : "Profile updated",
-    PROFILE_IMAGE_UPDATED : "Profile image updated"
+    PROFILE_IMAGE_UPDATED : "Profile image updated",
+    PROFILE_IMAGE_MISSING : "Profile image missing"
   },
 
   MESSAGE : {
-    MESSAGE_NOT_SENDED : "Your message could not be sent. Please try again"
+    MESSAGE_NOT_SENDED : "Your message could not be sent. Please try again",
+    MESSAGE_SENDED : "Your message successfully sent",
+    MESSAGE_COULD_NOT_UPDATED : "Your message could not be updated",
+    MESSAGE_DELETED : "Your message successfully deleted",
+    MESSAGE_UPDATED : "Your message successfully updated",
+    MESSAGE_COULD_NOT_DELETED : "Your message could not be deleted"
   },
   TOKEN: {
     MISS: "Token expired",

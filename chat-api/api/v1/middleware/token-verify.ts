@@ -1,7 +1,5 @@
 import { genericFunc } from "../common/generic-func";
-import jwt from "jsonwebtoken";
 import ResponseModel from "../model/error-model";
-import errorCodes from "../common/error.messages";
 import { Request } from "express";
 import { IResult } from "../model/common/common.interface";
 import { verifyToken } from "../common/jwt";

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+    deleteUser,
     refreshToken,
     resetPasssword,
     signIn,
@@ -87,6 +88,11 @@ authRouter.post(
 );
 
 authRouter.post("/sign-out",[ accessTokenVerify, verifyUser ], signOut)
+
+
+authRouter.delete("/delete", [
+    accessTokenVerify
+], deleteUser)
 
 
 

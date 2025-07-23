@@ -66,6 +66,7 @@
 import type { IFriend } from '~/model/friend-model'
 import type IResponse from '~/model/interfaces/iresponse'
 import type IUser from '~/model/interfaces/iuser'
+import { chatStore } from '~/store/chat-store'
 import toastStore from '~/store/toast-store'
 
 const groupName = ref<string>("")
@@ -73,6 +74,7 @@ const search = ref<string>("")
 const config = useRuntimeConfig()
 const toast = toastStore()
 const { $socket } = useNuxtApp()
+const chat = chatStore()
 const objects = reactive<{
     searchedFriends: IFriend[]
 }>({ searchedFriends: [] })
@@ -80,7 +82,7 @@ const objects = reactive<{
 const members = ref<IFriend[]>([])
 
 const listeners = () => {
-    $socket.on("search_user_result", search_user_result)
+    $socket.on("search_user_friend_result", search_user_friend_result)
     $socket.on("create_group_chat_result", create_group_chat_result)
 }
 
@@ -88,8 +90,13 @@ onMounted(() => {
     listeners()
 })
 
+onUnmounted(() => {
+    $socket.off("search_user_friend_result")
+    $socket.off("create_group_chat_result")
+})
+
 const searchQuery = () => {
-    $socket.emit("search_user", { username: search.value.trim() })
+    $socket.emit("search_user_friend", { username: search.value.trim() })
 }
 
 const addMember = (user: IFriend) => {
@@ -97,14 +104,13 @@ const addMember = (user: IFriend) => {
 }
 
 const createGroup = () => {
-    $socket.emit("create_group_chat", { group_name: groupName.value, members: members.value })
+    $socket.emit("create_group_chat", { group_name: groupName.value, members: members.value.map(member => member.user_id) })
 }
 
 
-const search_user_result = (response: any) => {
+const search_user_friend_result = (response: any) => {
     try {
         const res = response as IResponse
-        console.log(res.value)
         const toUser = res.value as IFriend[]
         objects.searchedFriends = toUser.filter(user => !members.value.some(member => member.user_id === user.user_id))
     } catch (e) {
@@ -115,6 +121,10 @@ const search_user_result = (response: any) => {
 const create_group_chat_result = (response: any) => {
     try {
         const res = response as IResponse
+
+        if(res.status == 200){
+            chat.emitChat()
+        }
 
         toast.sendToastWithResponse(res)
     } catch (e) {

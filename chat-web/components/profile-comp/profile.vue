@@ -61,12 +61,11 @@
         </div>
     </div>
 </template>
-
 <script lang="ts" setup>
 import profileStore from "~/store/profile-store";
-import { reactive, watch } from "vue";
+import { reactive, ref, watch } from "vue";
 import { clientSideFetch } from "~/common/genericFetch";
-import { API_URL, BASE_URL } from "~/common/API";
+import { API_URL } from "~/common/API";
 import type IResponse from "~/model/interfaces/iresponse";
 import ResponseModel from "~/model/response-model";
 import toastStore from "~/store/toast-store";
@@ -75,121 +74,124 @@ import authStore from "~/store/auth-store";
 
 const toast = toastStore();
 const profile = profileStore();
-const config = useRuntimeConfig()
-const auth = authStore()
+const auth = authStore();
+const config = useRuntimeConfig();
+
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const profileInformation = reactive<{
-    user: IUser;
-    updatePhoto: File | null;
+  user: IUser;
+  updatePhoto: File | null;
 }>({
-    user: {
-        username: "",
-        email: "",
-        phone: "",
-        photo: "",
-    } as IUser,
-    updatePhoto: null,
+  user: {
+    username: "",
+    email: "",
+    phone: "",
+    photo: "",
+  } as IUser,
+  updatePhoto: null,
 });
 
 watch(
-    () => profile.userProfile,
-    (newValue) => {
-        if (newValue) {
-            profileInformation.user.username = newValue.username;
-            profileInformation.user.email = newValue.email;
-            profileInformation.user.phone = newValue.phone;
-            profileInformation.user.photo = newValue.photo;
-        }
-    },
-    { immediate: true }
+  () => profile.userProfile,
+  (newValue) => {
+    if (newValue) {
+      Object.assign(profileInformation.user, newValue);
+    }
+  },
+  { immediate: true }
 );
 
-const updateProfile = async () => {
-    try {
-        const res = (await clientSideFetch({
-            url: `${API_URL}/profile/update`,
-            body: {
-                username: profileInformation.user.username,
-                email: profileInformation.user.email,
-                phone: profileInformation.user.phone,
-            },
-            credentials: "include",
-            immediate: false,
-            method: "PUT",
-        })) as IResponse;
-
-        if (profileInformation.updatePhoto) {
-            const formData = new FormData();
-            formData.append("photo", profileInformation.updatePhoto);
-
-            const profileRes = (await clientSideFetch({
-                url: `${API_URL}/profile/update-photo`,
-                body: formData,
-                credentials: "include",
-                immediate: false,
-                method: "PUT",
-            })) as IResponse;
-
-            if (profileRes.status !== 200) {
-                toast.error({ title: res.message, description: "" });
-            }
-        }
-
-        if (res.status !== 200) {
-            toast.error({ title: res.message, description: "" });
-            return;
-        }
-
-        toast.success({ title: res.message, description: "" });
-
-        await profile.getProfile();
-    } catch (e) {
-        if (e instanceof ResponseModel) {
-            toast.error({ title: e.message, description: "" });
-            return;
-        }
-        toast.error({ title: "Something went wrong", description: "" });
-
-        console.log(e);
-    }
-};
-
-const fileInput = ref(null);
-
 const triggerFileInput = () => {
-    fileInput.value.click();
+  fileInput.value?.click();
 };
 
-const onFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            profileInformation.user.photo = e.target.result as string;
-            profileInformation.updatePhoto = file;
-        };
-        reader.readAsDataURL(file);
+const onFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (file) {
+    profileInformation.updatePhoto = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profileInformation.user.photo = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const updateProfile = async () => {
+  try {
+    const res = await clientSideFetch({
+      url: `${API_URL}/profile/update`,
+      body: {
+        username: profileInformation.user.username,
+        email: profileInformation.user.email,
+        phone: profileInformation.user.phone,
+      },
+      credentials: "include",
+      method: "PUT",
+      immediate : false
+    }) as IResponse;
+
+    if (res.status !== 200) {
+      toast.error({ title: res.message,description : "" });
+      return;
     }
+
+    // Fotoğraf güncellemesi varsa
+    if (profileInformation.updatePhoto) {
+      const formData = new FormData();
+      formData.append("photo", profileInformation.updatePhoto);
+
+      const photoRes = await clientSideFetch({
+        url: `${API_URL}/profile/update-photo`,
+        body: formData,
+        credentials: "include",
+        method: "PUT",
+        immediate : false
+      }) as IResponse;
+
+      if (photoRes.status !== 200) {
+        toast.error({ title: photoRes.message, description : "" });
+      }
+    }
+
+    toast.success({ title: res.message, description : "" });
+    await profile.getProfile();
+
+  } catch (e) {
+    if (e instanceof ResponseModel) {
+        console.log(e.message)
+      toast.error({ title: e.message, description : "" });
+    } else {
+      toast.error({ title: "Something went wrong", description : "" });
+      console.error(e);
+    }
+  }
 };
 
 const deleteProfile = async () => {
-    if(confirm("Your account will be deleted. Are you sure?")){
-        const res = await profile.deleteProfile()
-        toast.sendToastWithResponse(res)
+  if (confirm("Your account will be deleted. Are you sure?")) {
+    const res = await profile.deleteProfile();
+    if(res.error){
+      toast.error({ title: res.error.message, description : "" });
+      return
     }
-}
-
+    toast.success({ title: "Account deleted", description : "" });
+    window.location.reload()
+    
+  }
+};
 
 const signOut = async () => {
-    if(confirm("Do you want sign out ?")){
-        const res = await auth.signOut()
-        if(res.status == 200){
-            window.location.reload()
-        }
-        toast.sendToastWithResponse(res)
-    }
-}
+  if (confirm("Do you want to sign out?")) {
+    const res = await auth.signOut();
+    toast.sendToastWithResponse(res);
+    if (res.status === 200) window.location.reload();
+  }
+};
 </script>
+
 
 <style scoped>
 .profile-image-wrapper .overlay {
